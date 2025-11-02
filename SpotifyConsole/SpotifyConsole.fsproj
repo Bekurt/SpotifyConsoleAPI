@@ -5,4 +5,9 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-<ItemGroup><Compile Include="Program.fs" /></ItemGroup></Project>
+  
+  <ItemGroup>
+    <Compile Include="Auth.fs" />
+    <Compile Include="Search.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup></Project>
