@@ -7,7 +7,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <Compile Include="Auth.fs" />
-    <Compile Include="Search.fs" />
+    <Compile Include="endpoints\Auth.fs" />
+    <Compile Include="endpoints\Search.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup></Project>
