@@ -5,3 +5,4 @@ obj/
 *.suo
 *.log
 spotify_tokens.json
+api_response.json

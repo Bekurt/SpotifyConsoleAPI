@@ -7,7 +7,7 @@ let commandInterpreter (clientId: string) (clientSecret: string) argv =
     | "auth" :: _ ->
         // Default redirect URI -- must be registered in your Spotify app
         let redirectUri = "http://localhost:5000/callback"
-        let scopes = "user-read-private user-read-email" // example scopes
+        let scopes = "user-read-private user-read-email user-library-read" // example scopes
 
         Auth.authorizeAsync clientId clientSecret redirectUri scopes
         |> Async.AwaitTask
@@ -15,25 +15,26 @@ let commandInterpreter (clientId: string) (clientSecret: string) argv =
 
         0
     | "search" :: rest when rest.Length > 0 ->
-        let query = String.Join(" ", rest)
+        if rest |> Search.isValidQuery then
+            let query: Search.SearchQuery = Search.buildQuery rest
 
-        let token =
-            Auth.getAccessToken clientId clientSecret "http://localhost:5000/callback"
+            let token =
+                Auth.getAccessToken clientId clientSecret "http://localhost:5000/callback"
 
-        let tracks =
-            Search.searchTracksAsync token query
-            |> Async.AwaitTask
-            |> Async.RunSynchronously
+            let tracks =
+                Search.searchAsync token query |> Async.AwaitTask |> Async.RunSynchronously
 
-        if tracks.Length = 0 then
-            printfn "No tracks found for '%s'" query
+            1
         else
-            printfn "Top %d results for '%s':" tracks.Length query
+            // if tracks.Length = 0 then
+            //     printfn "No tracks found for '%s'" query
+            // else
+            //     printfn "Top %d results for '%s':" tracks.Length query
 
-            tracks
-            |> Array.iteri (fun i (name, artists, url) -> printfn "%d) %s — %s\n   %s" (i + 1) name artists url)
+            //     tracks
+            //     |> Array.iteri (fun i (name, artists, url) -> printfn "%d) %s — %s\n   %s" (i + 1) name artists url)
 
-        0
+            0
     | _ ->
         printfn "Usage: dotnet run -- auth"
         printfn "       dotnet run -- search <query>"
@@ -43,7 +44,7 @@ let commandInterpreter (clientId: string) (clientSecret: string) argv =
 let rec interactiveLoop (clientId: string) (clientSecret: string) =
     printf "> "
 
-    match Console.ReadLine().Split(' ') |> Array.toList with
+    match Console.ReadLine().Split(" - ") |> Array.toList with
     | "exit" :: _ -> 0
     | "quit" :: _ -> 0
     | cmd ->
