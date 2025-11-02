@@ -9,6 +9,20 @@ open System.Text.Json
 open System.IO
 open System.Diagnostics
 
+let getClientCredentials () =
+    let clientId = Environment.GetEnvironmentVariable "SPOTIFY_CLIENT_ID"
+    let clientSecret = Environment.GetEnvironmentVariable "SPOTIFY_CLIENT_SECRET"
+
+    if String.IsNullOrWhiteSpace clientId || String.IsNullOrWhiteSpace clientSecret then
+        failwith (
+            sprintf
+                "%s\n%s"
+                "Please set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables."
+                "See README.md for instructions."
+        )
+
+    clientId, clientSecret
+
 type TokenInfo =
     { AccessToken: string
       RefreshToken: string option
@@ -37,7 +51,9 @@ let loadTokens () : TokenInfo option =
 let private isValid (t: TokenInfo) =
     t.ExpiresAt > DateTime.UtcNow.AddMinutes(1.0)
 
-let private clientCredentialsTokenAsync (clientId: string) (clientSecret: string) =
+let private clientCredentialsTokenAsync () =
+    let clientId, clientSecret = getClientCredentials ()
+
     task {
         use http = new HttpClient()
 
@@ -62,7 +78,9 @@ let private clientCredentialsTokenAsync (clientId: string) (clientSecret: string
         return access, DateTime.UtcNow.AddSeconds(float expires)
     }
 
-let private exchangeCodeForTokenAsync (clientId: string) (clientSecret: string) (code: string) (redirectUri: string) =
+let private exchangeCodeForTokenAsync (code: string) (redirectUri: string) =
+    let clientId, clientSecret = getClientCredentials ()
+
     task {
         use http = new HttpClient()
 
@@ -106,7 +124,9 @@ let private exchangeCodeForTokenAsync (clientId: string) (clientSecret: string) 
         return ti
     }
 
-let private refreshTokenAsync (clientId: string) (clientSecret: string) (refreshToken: string) =
+let private refreshTokenAsync (refreshToken: string) =
+    let clientId, clientSecret = getClientCredentials ()
+
     task {
         use http = new HttpClient()
 
@@ -183,7 +203,11 @@ let private openBrowser url =
         // fallback: print url
         printfn "Open this URL in your browser: %s" url
 
-let authorizeAsync (clientId: string) (clientSecret: string) (redirectUri: string) (scopes: string) =
+let authorizeAsync () =
+    let clientId, clientSecret = getClientCredentials ()
+    let redirectUri = "http://localhost:5000/callback"
+    let scopes = "user-read-private user-read-email user-library-read"
+
     task {
         // Build authorization URL
         let authUrl =
@@ -207,7 +231,7 @@ let authorizeAsync (clientId: string) (clientSecret: string) (redirectUri: strin
             failwith "No code received"
 
         let tokens =
-            exchangeCodeForTokenAsync clientId clientSecret code redirectUri
+            exchangeCodeForTokenAsync code redirectUri
             |> Async.AwaitTask
             |> Async.RunSynchronously
 
@@ -215,13 +239,13 @@ let authorizeAsync (clientId: string) (clientSecret: string) (redirectUri: strin
         printfn "Authorization complete. Tokens saved to %s" (tokenFilePath ())
     }
 
-let getAccessToken (clientId: string) (clientSecret: string) (redirectUri: string) =
+let getAccessToken () =
     // Try saved tokens -> refresh if needed -> fallback to client credentials
     match loadTokens () with
     | Some t when isValid t -> t.AccessToken
     | Some t when t.RefreshToken.IsSome ->
         let refreshed =
-            refreshTokenAsync clientId clientSecret t.RefreshToken.Value
+            refreshTokenAsync t.RefreshToken.Value
             |> Async.AwaitTask
             |> Async.RunSynchronously
 
@@ -230,8 +254,6 @@ let getAccessToken (clientId: string) (clientSecret: string) (redirectUri: strin
     | _ ->
         // fallback to client credentials
         let access, _exp =
-            clientCredentialsTokenAsync clientId clientSecret
-            |> Async.AwaitTask
-            |> Async.RunSynchronously
+            clientCredentialsTokenAsync () |> Async.AwaitTask |> Async.RunSynchronously
 
         access

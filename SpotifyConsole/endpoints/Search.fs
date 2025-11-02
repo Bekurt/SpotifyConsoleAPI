@@ -11,19 +11,6 @@ type FilterType =
     | Playlist
     | Track
 
-type SearchQuery =
-    { Query: string
-      Type: FilterType option
-      Limit: int option
-      Offset: int option }
-
-let typeToString (t: FilterType) =
-    match t with
-    | Album -> "album"
-    | Artist -> "artist"
-    | Playlist -> "playlist"
-    | Track -> "track"
-
 let stringToType t =
     match t with
     | "album" -> Some Album
@@ -38,63 +25,64 @@ let parseIntStrOption (s: string) =
     | s -> Some(Int32.Parse s)
 
 let isValidQuery (query: list<string>) =
-    match query.Length with
-    | 0 ->
-        printfn "Missing query argument"
-        false
-    | 2 ->
-        if stringToType (query.Item(1)) = None then
-            printfn "valid filter options are album, artist, playlist or track"
-            false
+    let isFirstPresent = query.Length > 0
+
+    let isValidFilter =
+        if query.Length >= 2 then
+            match stringToType (query.Item 1) with
+            | Some _ -> true
+            | None -> false
         else
             true
-    | _ -> true
 
-let buildQuery (query: list<string>) =
-    { Query = String.Join(" ", query.Item(0))
-      Type =
-        try
-            query.Item(1) |> stringToType
-        with _ ->
-            None
-      Limit =
-        try
-            query.Item(2) |> parseIntStrOption
-        with _ ->
-            None
-      Offset =
-        try
-            query.Item(3) |> parseIntStrOption
-        with _ ->
-            None }
+    let isValidLimit =
+        if query.Length >= 3 then
+            match parseIntStrOption (query.Item 2) with
+            | Some n when n > 0 && n <= 50 -> true
+            | _ -> false
+        else
+            true
 
-let searchAsync (token: string) (query: SearchQuery) =
+    let isValidOffset =
+        if query.Length >= 4 then
+            match parseIntStrOption (query.Item 3) with
+            | Some n when n >= 0 -> true
+            | _ -> false
+        else
+            true
+
+    if not isFirstPresent then
+        printfn "Missing query argument"
+
+    if not isValidFilter then
+        printfn "valid filter options are album, artist, playlist or track"
+
+    if not isValidLimit then
+        printfn "limit must be an integer between 1 and 50"
+
+    if not isValidOffset then
+        printfn "offset must be a non-negative integer"
+
+    isFirstPresent && isValidFilter && isValidLimit && isValidOffset
+
+let buildUrl (queryList: list<string>) =
+    if isValidQuery queryList then
+        sprintf
+            "https://api.spotify.com/v1/search?q=%s&type=%s&limit=%s&offset%s"
+            (Uri.EscapeDataString(queryList.Item 0))
+            (Uri.EscapeDataString(queryList.Item 1))
+            (queryList.Item 2)
+            (queryList.Item 3)
+    else
+        failwith "Invalid query"
+
+let searchAsync (query: list<string>) =
+    let url = buildUrl query
+
     task {
+        let token = Auth.getAccessToken ()
         use http = new HttpClient()
         http.DefaultRequestHeaders.Authorization <- Headers.AuthenticationHeaderValue("Bearer", token)
-
-        let typeStr =
-            match query.Type with
-            | Some t -> typeToString t
-            | None -> "track"
-
-        let limit =
-            match query.Limit with
-            | Some l -> l
-            | None -> 50
-
-        let offset =
-            match query.Offset with
-            | Some o -> o
-            | None -> 0
-
-        let url =
-            sprintf
-                "https://api.spotify.com/v1/search?q=%s&type=%s&limit=%d&offset%d"
-                (Uri.EscapeDataString(query.Query))
-                (Uri.EscapeDataString(typeStr))
-                limit
-                offset
 
         use! resp = http.GetAsync(url)
         let! body = resp.Content.ReadAsStringAsync()
