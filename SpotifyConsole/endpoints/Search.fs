@@ -104,7 +104,8 @@ let searchAsync (token: string) (query: SearchQuery) =
 
         use doc = JsonDocument.Parse(body)
 
-        let savePath = Path.Combine(Environment.CurrentDirectory, "api_response.json")
+        let savePath =
+            Path.Combine(Environment.CurrentDirectory, "responses/api_response.json")
 
         let opts = JsonSerializerOptions(WriteIndented = true)
         File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))

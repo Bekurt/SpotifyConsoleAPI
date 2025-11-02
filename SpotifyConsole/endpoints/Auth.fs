@@ -15,7 +15,7 @@ type TokenInfo =
       ExpiresAt: DateTime }
 
 let private tokenFilePath () =
-    Path.Combine(Environment.CurrentDirectory, "spotify_tokens.json")
+    Path.Combine(Environment.CurrentDirectory, "responses/spotify_tokens.json")
 
 let private saveTokens (t: TokenInfo) =
     let opts = JsonSerializerOptions(WriteIndented = true)
