@@ -7,6 +7,7 @@ open System.Text.Json.Serialization
 open System.Threading.Tasks
 open System.IO
 open System.Diagnostics
+open System.Collections.Generic
 
 type TokenInfo = {
     AccessToken: string
@@ -14,23 +15,28 @@ type TokenInfo = {
     ExpiresAt: DateTime
 }
 
+//Token storage path
 let tokenFilePath () = Path.Combine(Environment.CurrentDirectory, "spotify_tokens.json")
 
+// Save token to file
 let saveTokens (t:TokenInfo) =
     let opts = JsonSerializerOptions(WriteIndented = true)
     File.WriteAllText(tokenFilePath(), JsonSerializer.Serialize(t, opts))
 
+// Load token from file
 let loadTokens () : TokenInfo option =
-    let p = tokenFilePath()
-    if File.Exists(p) then
+    let path = tokenFilePath()
+    if File.Exists(path) then
         try
-            let text = File.ReadAllText(p)
+            let text = File.ReadAllText(path)
             let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
             Some(JsonSerializer.Deserialize<TokenInfo>(text, opts))
         with _ -> None
     else None
 
-let isValid (t:TokenInfo) = t.ExpiresAt > DateTime.UtcNow.AddMinutes(1.0)
+// Check if token is still valid
+let isValid (t:TokenInfo) = t.ExpiresAt > DateTime.UtcNow
+
 
 let clientCredentialsTokenAsync (clientId:string) (clientSecret:string) =
     task {
@@ -38,7 +44,9 @@ let clientCredentialsTokenAsync (clientId:string) (clientSecret:string) =
         let auth = Convert.ToBase64String(Encoding.UTF8.GetBytes(sprintf "%s:%s" clientId clientSecret))
         use req = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token")
         req.Headers.Authorization <- Headers.AuthenticationHeaderValue("Basic", auth)
-        req.Content <- new FormUrlEncodedContent([ KeyValuePair<string,string>("grant_type","client_credentials") ])
+        req.Content <- new FormUrlEncodedContent([
+           KeyValuePair<string,string>("grant_type","client_credentials") 
+           ])
         use! resp = http.SendAsync(req)
         let! body = resp.Content.ReadAsStringAsync()
         if not resp.IsSuccessStatusCode then failwithf "Token request failed: %d - %s" (int resp.StatusCode) body
@@ -68,7 +76,12 @@ let exchangeCodeForTokenAsync (clientId:string) (clientSecret:string) (code:stri
         let root = doc.RootElement
         let access = root.GetProperty("access_token").GetString()
         let expires = root.GetProperty("expires_in").GetInt32()
-        let refresh = if root.TryGetProperty("refresh_token", &_) then Some(root.GetProperty("refresh_token").GetString()) else None
+        let refresh =
+            let mutable refreshElem = Unchecked.defaultof<JsonElement>
+            if root.TryGetProperty("refresh_token", &refreshElem) then
+                Some(refreshElem.GetString())
+            else
+                None
         let ti = { AccessToken = access; RefreshToken = refresh; ExpiresAt = DateTime.UtcNow.AddSeconds(float expires) }
         return ti
     }
