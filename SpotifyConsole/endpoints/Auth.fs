@@ -169,7 +169,7 @@ let private refreshTokenAsync (refreshToken: string) =
         return ti
     }
 
-let private startLocalListenerAndReceiveCode (prefix: string) (path: string) =
+let private startLocalListenerAndReceiveCode (prefix: string) =
     task {
         use listener = new HttpListener()
         listener.Prefixes.Add(prefix) // e.g. http://localhost:5000/
@@ -179,18 +179,29 @@ let private startLocalListenerAndReceiveCode (prefix: string) (path: string) =
             let! ctx = listener.GetContextAsync()
             let req = ctx.Request
             let qs = req.QueryString
-            let code = qs.["code"]
             let resp = ctx.Response
 
-            let responseString =
-                "<html><body>You can close this window and return to the application.</body></html>"
+            match qs.["code"], qs.["error"] with
+            | null, error ->
+                let errorMsg =
+                    sprintf "<html><body><h1>Error</h1><p>Authentication failed: %s</p></body></html>" error
 
-            let buffer = Encoding.UTF8.GetBytes(responseString)
-            resp.ContentLength64 <- int64 buffer.Length
-            use output = resp.OutputStream
-            do! output.WriteAsync(buffer, 0, buffer.Length)
-            resp.Close()
-            return code
+                let buffer = Encoding.UTF8.GetBytes(errorMsg)
+                resp.ContentLength64 <- int64 buffer.Length
+                use output = resp.OutputStream
+                do! output.WriteAsync(buffer, 0, buffer.Length)
+                resp.Close()
+                return Error error
+            | code, _ ->
+                let responseString =
+                    "<html><body><h1>Success!</h1><p>You can close this window and return to the application.</p></body></html>"
+
+                let buffer = Encoding.UTF8.GetBytes(responseString)
+                resp.ContentLength64 <- int64 buffer.Length
+                use output = resp.OutputStream
+                do! output.WriteAsync(buffer, 0, buffer.Length)
+                resp.Close()
+                return Ok code
         finally
             listener.Stop()
     }
@@ -204,7 +215,7 @@ let private openBrowser url =
         printfn "Open this URL in your browser: %s" url
 
 let authorizeAsync () =
-    let clientId, clientSecret = getClientCredentials ()
+    let clientId, _ = getClientCredentials ()
     let redirectUri = "http://localhost:5000/callback"
     let scopes = "user-read-private user-read-email user-library-read"
 
@@ -212,31 +223,23 @@ let authorizeAsync () =
         // Build authorization URL
         let authUrl =
             sprintf
-                "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&show_dialog=true"
+                "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=%s&show_dialog=true"
                 (Uri.EscapeDataString(clientId))
                 (Uri.EscapeDataString(redirectUri))
                 (Uri.EscapeDataString(scopes))
+                (Random().Next(99999).ToString())
 
         openBrowser authUrl
         // Expect redirect to e.g. http://localhost:5000/callback?code=...
         let uri = Uri(redirectUri)
         let prefix = sprintf "%s://%s:%d/" uri.Scheme uri.Host uri.Port
 
-        let code =
-            startLocalListenerAndReceiveCode prefix uri.AbsolutePath
-            |> Async.AwaitTask
-            |> Async.RunSynchronously
-
-        if String.IsNullOrEmpty(code) then
-            failwith "No code received"
-
-        let tokens =
-            exchangeCodeForTokenAsync code redirectUri
-            |> Async.AwaitTask
-            |> Async.RunSynchronously
-
-        saveTokens tokens
-        printfn "Authorization complete. Tokens saved to %s" (tokenFilePath ())
+        match! startLocalListenerAndReceiveCode prefix with
+        | Error err -> failwithf "Authentication failed: %s" err
+        | Ok code ->
+            let! tokens = exchangeCodeForTokenAsync code redirectUri
+            saveTokens tokens
+            printfn "Authorization complete. Tokens saved to %s" (tokenFilePath ())
     }
 
 let getAccessToken () =
