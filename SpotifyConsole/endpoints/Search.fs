@@ -97,22 +97,4 @@ let searchAsync (query: list<string>) =
 
         let opts = JsonSerializerOptions(WriteIndented = true)
         File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
-
-    // let items = doc.RootElement.GetProperty("tracks").GetProperty("items")
-
-    // let results =
-    //     items.EnumerateArray()
-    //     |> Seq.map (fun t ->
-    //         let name = t.GetProperty("name").GetString()
-
-    //         let artists =
-    //             t.GetProperty("artists").EnumerateArray()
-    //             |> Seq.map (fun a -> a.GetProperty("name").GetString())
-    //             |> String.concat ", "
-
-    //         let url = t.GetProperty("external_urls").GetProperty("spotify").GetString()
-    //         (name, artists, url))
-    //     |> Seq.toArray
-
-    // return results
     }

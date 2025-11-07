@@ -2,8 +2,8 @@ module SpotifyConsole.Program
 
 open System
 
-let commandInterpreter argv =
-    match argv |> Array.toList with
+let commandInterpreter argList =
+    match argList with
     | "auth" :: _ ->
         Auth.authorizeAsync () |> Async.AwaitTask |> Async.RunSynchronously
         0
@@ -17,23 +17,20 @@ let commandInterpreter argv =
 let rec interactiveLoop () =
     printf "> "
 
-    match Console.ReadLine().Split(" - ") |> Array.toList with
+    match Console.ReadLine().Split "-" |> Array.toList with
     | "exit" :: _ -> 0
     | "quit" :: _ -> 0
     | cmd ->
-        let result = commandInterpreter (cmd |> Array.ofList)
-        interactiveLoop |> ignore
+        let result = commandInterpreter cmd
+        interactiveLoop () |> ignore
         result
 
 
 [<EntryPoint>]
 let main argv =
     try
-        match argv |> Array.toList with
-        | "interactive" :: _ ->
-            printfn "Interactive mode. Type 'exit' to quit."
-            interactiveLoop ()
-        | _ -> commandInterpreter argv
+        printf "Welcome to the interactive console. Type 'exit' or 'quit' to exit\n"
+        interactiveLoop ()
     with ex ->
         printfn "Error: %s" ex.Message
         1
