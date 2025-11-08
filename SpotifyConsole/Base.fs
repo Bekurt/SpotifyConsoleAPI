@@ -32,3 +32,6 @@ let sendGetRequest (url: string) =
         let opts = JsonSerializerOptions(WriteIndented = true)
         File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
     }
+
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
