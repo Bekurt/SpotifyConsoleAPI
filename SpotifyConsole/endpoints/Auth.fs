@@ -9,6 +9,13 @@ open System.Text.Json
 open System.IO
 open System.Diagnostics
 
+type TokenInfo =
+    { AccessToken: string
+      RefreshToken: string option
+      ExpiresAt: DateTime }
+
+let SCOPE_LIST = "user-read-private user-read-email user-library-read"
+
 let getClientCredentials () =
     let clientId = Environment.GetEnvironmentVariable "SPOTIFY_CLIENT_ID"
     let clientSecret = Environment.GetEnvironmentVariable "SPOTIFY_CLIENT_SECRET"
@@ -23,59 +30,49 @@ let getClientCredentials () =
 
     clientId, clientSecret
 
-type TokenInfo =
-    { AccessToken: string
-      RefreshToken: string option
-      ExpiresAt: DateTime }
+let private openBrowser url =
+    try
+        let psi = ProcessStartInfo(FileName = url, UseShellExecute = true)
+        Process.Start(psi) |> ignore
+    with _ ->
+        // fallback: print url
+        printfn "Open this URL in your browser: %s" url
 
-let private tokenFilePath () =
-    Path.Combine(Environment.CurrentDirectory, "responses/spotify_tokens.json")
-
-let private saveTokens (t: TokenInfo) =
-    let opts = JsonSerializerOptions(WriteIndented = true)
-    File.WriteAllText(tokenFilePath (), JsonSerializer.Serialize(t, opts))
-
-let loadTokens () : TokenInfo option =
-    let p = tokenFilePath ()
-
-    if File.Exists(p) then
-        try
-            let text = File.ReadAllText(p)
-            let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
-            Some(JsonSerializer.Deserialize<TokenInfo>(text, opts))
-        with _ ->
-            None
-    else
-        None
-
-let private isValid (t: TokenInfo) =
-    t.ExpiresAt > DateTime.UtcNow.AddMinutes(1.0)
-
-let private clientCredentialsTokenAsync () =
-    let clientId, clientSecret = getClientCredentials ()
-
+let private startLocalListenerAndReceiveCode (prefix: string) =
     task {
-        use http = new HttpClient()
+        use listener = new HttpListener()
+        listener.Prefixes.Add(prefix) // e.g. http://localhost:5000/
+        listener.Start()
 
-        let auth =
-            Convert.ToBase64String(Encoding.UTF8.GetBytes(sprintf "%s:%s" clientId clientSecret))
+        try
+            let! ctx = listener.GetContextAsync()
+            let req = ctx.Request
+            let qs = req.QueryString
+            let resp = ctx.Response
 
-        use req =
-            new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token")
+            match qs.["code"], qs.["error"] with
+            | null, error ->
+                let errorMsg =
+                    sprintf "<html><body><h1>Error</h1><p>Authentication failed: %s</p></body></html>" error
 
-        req.Headers.Authorization <- Headers.AuthenticationHeaderValue("Basic", auth)
-        req.Content <- new FormUrlEncodedContent([ KeyValuePair<string, string>("grant_type", "client_credentials") ])
-        use! resp = http.SendAsync(req)
-        let! body = resp.Content.ReadAsStringAsync()
+                let buffer = Encoding.UTF8.GetBytes(errorMsg)
+                resp.ContentLength64 <- int64 buffer.Length
+                use output = resp.OutputStream
+                do! output.WriteAsync(buffer, 0, buffer.Length)
+                resp.Close()
+                return Error error
+            | code, _ ->
+                let responseString =
+                    "<html><body><h1>Success!</h1><p>You can close this window and return to the application.</p></body></html>"
 
-        if not resp.IsSuccessStatusCode then
-            failwithf "Token request failed: %d - %s" (int resp.StatusCode) body
-
-        use doc = JsonDocument.Parse(body)
-        let root = doc.RootElement
-        let access = root.GetProperty("access_token").GetString()
-        let expires = root.GetProperty("expires_in").GetInt32()
-        return access, DateTime.UtcNow.AddSeconds(float expires)
+                let buffer = Encoding.UTF8.GetBytes(responseString)
+                resp.ContentLength64 <- int64 buffer.Length
+                use output = resp.OutputStream
+                do! output.WriteAsync(buffer, 0, buffer.Length)
+                resp.Close()
+                return Ok code
+        finally
+            listener.Stop()
     }
 
 let private exchangeCodeForTokenAsync (code: string) (redirectUri: string) =
@@ -124,6 +121,57 @@ let private exchangeCodeForTokenAsync (code: string) (redirectUri: string) =
         return ti
     }
 
+let private tokenFilePath () =
+    Path.Combine(Environment.CurrentDirectory, "responses/spotify_tokens.json")
+
+let private saveTokens (t: TokenInfo) =
+    let opts = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(tokenFilePath (), JsonSerializer.Serialize(t, opts))
+
+let authorizeAsync () =
+    let clientId, _ = getClientCredentials ()
+    let redirectUri = "http://localhost:5000/callback"
+    let scopes = SCOPE_LIST
+
+    task {
+        // Build authorization URL
+        let authUrl =
+            sprintf
+                "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=%s&show_dialog=true"
+                (Uri.EscapeDataString(clientId))
+                (Uri.EscapeDataString(redirectUri))
+                (Uri.EscapeDataString(scopes))
+                (Random().Next(99999).ToString())
+
+        openBrowser authUrl
+        // Expect redirect to e.g. http://localhost:5000/callback?code=...
+        let uri = Uri(redirectUri)
+        let prefix = sprintf "%s://%s:%d/" uri.Scheme uri.Host uri.Port
+
+        match! startLocalListenerAndReceiveCode prefix with
+        | Error err -> failwithf "Authentication failed: %s" err
+        | Ok code ->
+            let! tokens = exchangeCodeForTokenAsync code redirectUri
+            saveTokens tokens
+            printfn "Authorization complete. Tokens saved to %s" (tokenFilePath ())
+    }
+
+let loadTokens () : TokenInfo option =
+    let p = tokenFilePath ()
+
+    if File.Exists(p) then
+        try
+            let text = File.ReadAllText(p)
+            let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
+            Some(JsonSerializer.Deserialize<TokenInfo>(text, opts))
+        with _ ->
+            None
+    else
+        None
+
+let private isValid (t: TokenInfo) =
+    t.ExpiresAt > DateTime.UtcNow.AddMinutes(1.0)
+
 let private refreshTokenAsync (refreshToken: string) =
     let clientId, clientSecret = getClientCredentials ()
 
@@ -169,77 +217,31 @@ let private refreshTokenAsync (refreshToken: string) =
         return ti
     }
 
-let private startLocalListenerAndReceiveCode (prefix: string) =
-    task {
-        use listener = new HttpListener()
-        listener.Prefixes.Add(prefix) // e.g. http://localhost:5000/
-        listener.Start()
-
-        try
-            let! ctx = listener.GetContextAsync()
-            let req = ctx.Request
-            let qs = req.QueryString
-            let resp = ctx.Response
-
-            match qs.["code"], qs.["error"] with
-            | null, error ->
-                let errorMsg =
-                    sprintf "<html><body><h1>Error</h1><p>Authentication failed: %s</p></body></html>" error
-
-                let buffer = Encoding.UTF8.GetBytes(errorMsg)
-                resp.ContentLength64 <- int64 buffer.Length
-                use output = resp.OutputStream
-                do! output.WriteAsync(buffer, 0, buffer.Length)
-                resp.Close()
-                return Error error
-            | code, _ ->
-                let responseString =
-                    "<html><body><h1>Success!</h1><p>You can close this window and return to the application.</p></body></html>"
-
-                let buffer = Encoding.UTF8.GetBytes(responseString)
-                resp.ContentLength64 <- int64 buffer.Length
-                use output = resp.OutputStream
-                do! output.WriteAsync(buffer, 0, buffer.Length)
-                resp.Close()
-                return Ok code
-        finally
-            listener.Stop()
-    }
-
-let private openBrowser url =
-    try
-        let psi = ProcessStartInfo(FileName = url, UseShellExecute = true)
-        Process.Start(psi) |> ignore
-    with _ ->
-        // fallback: print url
-        printfn "Open this URL in your browser: %s" url
-
-let authorizeAsync () =
-    let clientId, _ = getClientCredentials ()
-    let redirectUri = "http://localhost:5000/callback"
-    let scopes = "user-read-private user-read-email user-library-read"
+let private clientCredentialsTokenAsync () =
+    let clientId, clientSecret = getClientCredentials ()
 
     task {
-        // Build authorization URL
-        let authUrl =
-            sprintf
-                "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=%s&show_dialog=true"
-                (Uri.EscapeDataString(clientId))
-                (Uri.EscapeDataString(redirectUri))
-                (Uri.EscapeDataString(scopes))
-                (Random().Next(99999).ToString())
+        use http = new HttpClient()
 
-        openBrowser authUrl
-        // Expect redirect to e.g. http://localhost:5000/callback?code=...
-        let uri = Uri(redirectUri)
-        let prefix = sprintf "%s://%s:%d/" uri.Scheme uri.Host uri.Port
+        let auth =
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(sprintf "%s:%s" clientId clientSecret))
 
-        match! startLocalListenerAndReceiveCode prefix with
-        | Error err -> failwithf "Authentication failed: %s" err
-        | Ok code ->
-            let! tokens = exchangeCodeForTokenAsync code redirectUri
-            saveTokens tokens
-            printfn "Authorization complete. Tokens saved to %s" (tokenFilePath ())
+        use req =
+            new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token")
+
+        req.Headers.Authorization <- Headers.AuthenticationHeaderValue("Basic", auth)
+        req.Content <- new FormUrlEncodedContent([ KeyValuePair<string, string>("grant_type", "client_credentials") ])
+        use! resp = http.SendAsync(req)
+        let! body = resp.Content.ReadAsStringAsync()
+
+        if not resp.IsSuccessStatusCode then
+            failwithf "Token request failed: %d - %s" (int resp.StatusCode) body
+
+        use doc = JsonDocument.Parse(body)
+        let root = doc.RootElement
+        let access = root.GetProperty("access_token").GetString()
+        let expires = root.GetProperty("expires_in").GetInt32()
+        return access, DateTime.UtcNow.AddSeconds(float expires)
     }
 
 let getAccessToken () =
