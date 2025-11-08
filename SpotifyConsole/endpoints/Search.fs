@@ -26,13 +26,11 @@ let searchAsync (query: list<string>) =
                 | _ -> ""
             | _ -> "")
 
-    let url =
-        if query.Length > 0 then
-            printfn "Sending request with parameters %A" urlMapping
+    if query.Length > 0 then
+        printfn "Sending request with parameters %A" urlMapping
 
-            urlMapping
-            |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search?" BASE_URL)
-        else
-            failwith "Query is missing required parameters"
-
-    sendGetRequest url
+        urlMapping
+        |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search?" BASE_URL)
+        |> sendGetRequest
+    else
+        failwith "Query is missing required parameters"

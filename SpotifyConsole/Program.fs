@@ -45,5 +45,5 @@ let main argv =
         interactiveLoop ()
         0
     with ex ->
-        printfn "Error: %s" ex.Message
+        printfn "Error: %s\n" ex.Message
         400

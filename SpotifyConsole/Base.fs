@@ -5,7 +5,7 @@ open System.Net.Http
 open System.Text.Json
 open System.IO
 
-let BASE_URL = "https://api.spotify.com/v1/"
+let BASE_URL = "https://api.spotify.com/v1"
 
 let parseIntStrOption (s: string) =
     match s with
@@ -13,6 +13,8 @@ let parseIntStrOption (s: string) =
     | s -> Some(Int32.Parse s)
 
 let sendGetRequest (url: string) =
+    printfn "Sending request to %s" url
+
     task {
         let token = Auth.getAccessToken ()
         use http = new HttpClient()
@@ -22,7 +24,7 @@ let sendGetRequest (url: string) =
         let! body = resp.Content.ReadAsStringAsync()
 
         if not resp.IsSuccessStatusCode then
-            failwithf "Search failed: %d - %s" (int resp.StatusCode) body
+            failwithf "Request failed: %d - %s" (int resp.StatusCode) body
 
         use doc = JsonDocument.Parse(body)
 
