@@ -1,6 +1,8 @@
 module SpotifyConsole.Program
 
 open System
+open System.IO
+open System.Text.Json
 
 let commandInterpreter argList =
     match argList with
@@ -25,6 +27,19 @@ let rec interactiveLoop () =
         interactiveLoop () |> ignore
         result
 
+let retrieveJson<'T> (filename: string) =
+    let path = Path.Combine(Environment.CurrentDirectory, "responses", filename)
+
+    if File.Exists(path) then
+        try
+            let text = File.ReadAllText path
+            let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
+            Some(JsonSerializer.Deserialize<'T>(text, opts))
+        with _ ->
+            None
+    else
+        printfn "File %s does not exist." filename
+        None
 
 [<EntryPoint>]
 let main argv =
