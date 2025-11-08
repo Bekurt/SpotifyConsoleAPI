@@ -7,8 +7,6 @@ open System.IO
 
 let BASE_URL = "https://api.spotify.com/v1/"
 
-let SCOPE_LIST = "user-read-private user-read-email user-library-read user-top-read"
-
 let parseIntStrOption (s: string) =
     match s with
     | "" -> None

@@ -9,6 +9,8 @@ open System.Text.Json
 open System.IO
 open System.Diagnostics
 
+let SCOPE_LIST = "user-read-private user-read-email user-library-read user-top-read"
+
 type TokenInfo =
     { AccessToken: string
       RefreshToken: string option
@@ -129,7 +131,7 @@ let private saveTokens (t: TokenInfo) =
 let authorizeAsync () =
     let clientId, _ = getClientCredentials ()
     let redirectUri = "http://localhost:5000/callback"
-    let scopes = Base.SCOPE_LIST
+    let scopes = SCOPE_LIST
 
     task {
         // Build authorization URL
