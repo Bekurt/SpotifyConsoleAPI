@@ -65,19 +65,17 @@ let isValidQuery (query: list<string>) =
 
     isFirstPresent && isValidFilter && isValidLimit && isValidOffset
 
-let buildUrl (queryList: list<string>) =
-    if isValidQuery queryList then
-        sprintf
-            "https://api.spotify.com/v1/search?q=%s&type=%s&limit=%s&offset%s"
-            (Uri.EscapeDataString(queryList.Item 0))
-            (Uri.EscapeDataString(queryList.Item 1))
-            (queryList.Item 2)
-            (queryList.Item 3)
-    else
-        failwith "Invalid query"
-
 let searchAsync (query: list<string>) =
-    let url = buildUrl query
+    let url =
+        if isValidQuery query then
+            sprintf
+                "https://api.spotify.com/v1/search?q=%s&type=%s&limit=%s&offset%s"
+                (Uri.EscapeDataString(query.Item 0))
+                (Uri.EscapeDataString(query.Item 1))
+                (query.Item 2)
+                (query.Item 3)
+        else
+            failwith "Invalid query"
 
     task {
         let token = Auth.getAccessToken ()
