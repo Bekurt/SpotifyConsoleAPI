@@ -12,6 +12,20 @@ let parseIntStrOption (s: string) =
     | "" -> None
     | s -> Some(Int32.Parse s)
 
+let retrieveJson<'T> (filename: string) =
+    let path = Path.Combine(Environment.CurrentDirectory, "responses", filename)
+
+    if File.Exists(path) then
+        try
+            let text = File.ReadAllText path
+            let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
+            Some(JsonSerializer.Deserialize<'T>(text, opts))
+        with _ ->
+            None
+    else
+        printfn "File %s does not exist." filename
+        None
+
 let sendGetRequest (url: string) =
     printfn "Sending request to %s" url
 
@@ -39,3 +53,20 @@ let sendGetRequest (url: string) =
 
     |> Async.AwaitTask
     |> Async.RunSynchronously
+
+type PaginatedResponse = { next: string; previous: string }
+
+let sendNextRequest () =
+    let r = retrieveJson<PaginatedResponse> "api_response.json"
+
+    match r with
+    | Some r -> r.next |> sendGetRequest
+    | None -> printfn "error in json reading"
+
+
+let sendPreviousRequest () =
+    let r = retrieveJson<PaginatedResponse> "api_response.json"
+
+    match r with
+    | Some r -> r.previous |> sendGetRequest
+    | None -> printfn "error in json reading"
