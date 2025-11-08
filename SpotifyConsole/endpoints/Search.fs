@@ -1,9 +1,7 @@
 module SpotifyConsole.Search
 
 open System
-open System.Net.Http
-open System.Text.Json
-open System.IO
+open Base
 
 type FilterType =
     | Album
@@ -24,7 +22,7 @@ let parseIntStrOption (s: string) =
     | "" -> None
     | s -> Some(Int32.Parse s)
 
-let isValidQuery (query: list<string>) =
+let private isValidQuery (query: list<string>) =
     let isFirstPresent = query.Length > 0
 
     let isValidFilter =
@@ -69,7 +67,8 @@ let searchAsync (query: list<string>) =
     let url =
         if isValidQuery query then
             sprintf
-                "https://api.spotify.com/v1/search?q=%s&type=%s&limit=%s&offset%s"
+                "%s/search?q=%s&type=%s&limit=%s&offset%s"
+                BASE_URL
                 (Uri.EscapeDataString(query.Item 0))
                 (Uri.EscapeDataString(query.Item 1))
                 (query.Item 2)
@@ -77,22 +76,4 @@ let searchAsync (query: list<string>) =
         else
             failwith "Invalid query"
 
-    task {
-        let token = Auth.getAccessToken ()
-        use http = new HttpClient()
-        http.DefaultRequestHeaders.Authorization <- Headers.AuthenticationHeaderValue("Bearer", token)
-
-        use! resp = http.GetAsync(url)
-        let! body = resp.Content.ReadAsStringAsync()
-
-        if not resp.IsSuccessStatusCode then
-            failwithf "Search failed: %d - %s" (int resp.StatusCode) body
-
-        use doc = JsonDocument.Parse(body)
-
-        let savePath =
-            Path.Combine(Environment.CurrentDirectory, "responses/api_response.json")
-
-        let opts = JsonSerializerOptions(WriteIndented = true)
-        File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
-    }
+    sendGetRequest url

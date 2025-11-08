@@ -8,6 +8,7 @@
   
   <ItemGroup>
     <Compile Include="endpoints\Auth.fs" />
+    <Compile Include="Base.fs" />
     <Compile Include="endpoints\Search.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup></Project>

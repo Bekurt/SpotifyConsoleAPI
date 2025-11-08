@@ -14,8 +14,6 @@ type TokenInfo =
       RefreshToken: string option
       ExpiresAt: DateTime }
 
-let SCOPE_LIST = "user-read-private user-read-email user-library-read"
-
 let getClientCredentials () =
     let clientId = Environment.GetEnvironmentVariable "SPOTIFY_CLIENT_ID"
     let clientSecret = Environment.GetEnvironmentVariable "SPOTIFY_CLIENT_SECRET"
@@ -131,7 +129,7 @@ let private saveTokens (t: TokenInfo) =
 let authorizeAsync () =
     let clientId, _ = getClientCredentials ()
     let redirectUri = "http://localhost:5000/callback"
-    let scopes = SCOPE_LIST
+    let scopes = Base.SCOPE_LIST
 
     task {
         // Build authorization URL
