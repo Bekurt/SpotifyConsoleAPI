@@ -41,3 +41,15 @@ let getUsersSavedTracks (query: list<string>) =
     |> sendGetRequest
 
     parseSavedTracks ()
+
+type SaveBody = { ids: list<string> }
+
+let saveTracks () =
+    let tracks = retrieveJson<list<ParsedResponse>> "parsed_response.json"
+
+    let body = tracks |> List.map (fun i -> i.id)
+
+    let opts = JsonSerializerOptions(WriteIndented = true)
+
+    JsonSerializer.Serialize(body, opts)
+    |> sendPutRequest (sprintf "%s/me/tracks" BASE_URL)

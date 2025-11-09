@@ -9,7 +9,12 @@ open System.Text.Json
 open System.IO
 open System.Diagnostics
 
-let SCOPE_LIST = "user-read-private user-read-email user-library-read user-top-read"
+let SCOPE_LIST =
+    "user-read-private"
+    + " user-read-email"
+    + " user-library-read"
+    + " user-library-modify"
+    + " user-top-read"
 
 type TokenInfo =
     { AccessToken: string

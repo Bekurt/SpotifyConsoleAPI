@@ -4,7 +4,7 @@ open System
 open Base
 
 let commandList = [ "auth"; "search"; "tracks"; "user"; "next"; "prev" ]
-let tracksCmdList = [ "get" ]
+let tracksCmdList = [ "get"; "save" ]
 let userCmdList = [ "top" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
@@ -27,6 +27,7 @@ let commandHelper argList =
     | "tracks" :: subPath :: _ ->
         match subPath with
         | "get" -> printfn "Get saved tracks. Query structure -> tracks-get-limit-offset"
+        | "save" -> printfn "Add tracks to saved. Query structure -> tracks-save"
         | _ -> noCommandFound subPath
     | "user" :: [] -> printCmdList userCmdList (Some "Endpoint for user actions.\nAvailable commands are:")
     | "user" :: subPath :: _ ->
@@ -46,6 +47,7 @@ let commandInterpreter argList =
     | "tracks" :: subPath :: query ->
         match subPath with
         | "get" -> Tracks.getUsersSavedTracks query
+        | "save" -> Tracks.saveTracks ()
         | _ -> noCommandFound subPath
     | "user" :: subPath :: query ->
         match subPath with

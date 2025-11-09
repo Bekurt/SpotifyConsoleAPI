@@ -9,6 +9,8 @@ open System.IO
 
 let BASE_URL = "https://api.spotify.com/v1"
 
+type ParsedResponse = { id: string; name: string }
+
 let parseIntStrOption (s: string) =
     match s with
     | "" -> None
