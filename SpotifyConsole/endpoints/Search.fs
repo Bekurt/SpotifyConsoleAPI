@@ -7,7 +7,7 @@ let searchItems (query: list<string>) =
         query
         |> List.mapi (fun i s ->
             match i with
-            | 0 -> sprintf "q=%s" s
+            | 0 -> sprintf "?q=%s" s
             | 1 ->
                 match s with
                 | "album" -> sprintf "&type=%s" s
@@ -26,10 +26,8 @@ let searchItems (query: list<string>) =
             | _ -> "")
 
     if query.Length > 0 then
-        printfn "Sending request with parameters %A" urlMapping
-
         urlMapping
-        |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search?" BASE_URL)
+        |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search" BASE_URL)
         |> sendGetRequest
     else
         failwith "Query is missing required parameters"
