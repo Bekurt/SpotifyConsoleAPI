@@ -59,7 +59,9 @@ let sendGetRequest (url: string) =
 
                 let opts = JsonSerializerOptions(WriteIndented = true)
                 File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
-                printfn "GET Success"
+
+                let total = doc.RootElement.GetProperty("total").GetInt32()
+                printfn "GET Success. %d results" total
     }
 
     |> Async.AwaitTask
