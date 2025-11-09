@@ -1,6 +1,23 @@
 module SpotifyConsole.Users
 
 open Base
+open System
+open System.Text.Json
+open System.IO
+
+type baseSpotifyItem = { id: string; name: string }
+type ItemListResponse = { items: list<baseSpotifyItem> }
+
+let parseTopItems () =
+    let itemList = retrieveJson<ItemListResponse> "api_response.json"
+
+    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
+
+    let savePath =
+        Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
+
+    let opts = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
 
 let getUsersTopItems (query: list<string>) =
     let urlMapping =
@@ -33,5 +50,7 @@ let getUsersTopItems (query: list<string>) =
         urlMapping
         |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/me/top/" BASE_URL)
         |> sendGetRequest
+
+        parseTopItems ()
     else
         failwith "Query is missing required parameters"

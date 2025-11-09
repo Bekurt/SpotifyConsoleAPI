@@ -6,12 +6,8 @@ open System.Net.Http.Headers
 open System.Text
 open System.Text.Json
 open System.IO
-open System.Text.Json.Serialization
 
 let BASE_URL = "https://api.spotify.com/v1"
-
-type baseSpotifyItem = { id: string; name: string }
-type ItemListResponse = { items: list<baseSpotifyItem> }
 
 let parseIntStrOption (s: string) =
     match s with
@@ -22,20 +18,8 @@ let retrieveJson<'T> (filename: string) =
     let path = Path.Combine(Environment.CurrentDirectory, "responses", filename)
 
     let text = File.ReadAllText path
-    let opts = JsonFSharpOptions.Default().ToJsonSerializerOptions()
+    let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
     JsonSerializer.Deserialize<'T>(text, opts)
-
-let parseTopItems () =
-    let itemList = retrieveJson<ItemListResponse> "api_response.json"
-
-    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
-
-    let savePath =
-        Path.Combine(Environment.CurrentDirectory, "responses/parsed_item.json")
-
-    let opts = JsonSerializerOptions(WriteIndented = true)
-    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
-    parsedList
 
 let sendGetRequest (url: string) =
     printfn "Sending GET to %s" url
