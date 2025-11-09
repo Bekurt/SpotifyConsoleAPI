@@ -1,9 +1,8 @@
 module SpotifyConsole.Search
 
-open System
 open Base
 
-let searchAsync (query: list<string>) =
+let searchItems (query: list<string>) =
     let urlMapping =
         query
         |> List.mapi (fun i s ->

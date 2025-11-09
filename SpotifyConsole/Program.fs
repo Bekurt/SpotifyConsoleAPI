@@ -5,10 +5,10 @@ open System
 let commandInterpreter argList =
     match argList with
     | "auth" :: _ -> Auth.authorizeAsync () |> Async.AwaitTask |> Async.RunSynchronously
-    | "search" :: query -> Search.searchAsync query
+    | "search" :: query -> Search.searchItems query
     | "user" :: subPath :: query ->
         match subPath with
-        | "top" -> Users.getUsersTopItemsAsync query
+        | "top" -> Users.getUsersTopItems query
         | _ -> printfn "%s has no matches" subPath
     | "next" :: _ -> Base.sendNextRequest ()
     | "prev" :: _ -> Base.sendPreviousRequest ()

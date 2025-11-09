@@ -2,7 +2,7 @@ module SpotifyConsole.Users
 
 open Base
 
-let getUsersTopItemsAsync (query: list<string>) =
+let getUsersTopItems (query: list<string>) =
     let urlMapping =
         query
         |> List.mapi (fun i s ->
