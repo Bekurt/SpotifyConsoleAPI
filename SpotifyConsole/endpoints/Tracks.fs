@@ -1,6 +1,25 @@
 module SpotifyConsole.Tracks
 
 open Base
+open System
+open System.Text.Json
+open System.IO
+
+type Track = { id: string; name: string }
+type SavedItem = { added_at: string; track: Track }
+type SavedResponse = { items: list<SavedItem> }
+
+let parseSavedTracks () =
+    let itemList = retrieveJson<SavedResponse> "api_response.json"
+
+    let parsedList =
+        itemList.items |> List.map (fun i -> { id = i.track.id; name = i.track.name })
+
+    let savePath =
+        Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
+
+    let opts = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
 
 let getUsersSavedTracks (query: list<string>) =
     let urlMapping =
@@ -20,3 +39,5 @@ let getUsersSavedTracks (query: list<string>) =
     urlMapping
     |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/me/tracks" BASE_URL)
     |> sendGetRequest
+
+    parseSavedTracks ()

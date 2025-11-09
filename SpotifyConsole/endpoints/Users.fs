@@ -5,11 +5,11 @@ open System
 open System.Text.Json
 open System.IO
 
-type baseSpotifyItem = { id: string; name: string }
-type ItemListResponse = { items: list<baseSpotifyItem> }
+type Item = { id: string; name: string }
+type TopResponse = { items: list<Item> }
 
 let parseTopItems () =
-    let itemList = retrieveJson<ItemListResponse> "api_response.json"
+    let itemList = retrieveJson<TopResponse> "api_response.json"
 
     let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
 
