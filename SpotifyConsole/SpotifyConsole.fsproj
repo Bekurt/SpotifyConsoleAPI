@@ -10,7 +10,12 @@
     <Compile Include="endpoints\Auth.fs" />
     <Compile Include="Base.fs" />
     <Compile Include="endpoints\Search.fs" />
-    <Compile Include="endpoints\Users.fs" />
     <Compile Include="endpoints\Tracks.fs" />
+    <Compile Include="endpoints\Users.fs" />
     <Compile Include="Program.fs" />
-  </ItemGroup></Project>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
+  </ItemGroup>
+</Project>

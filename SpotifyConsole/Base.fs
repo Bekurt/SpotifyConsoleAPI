@@ -6,8 +6,12 @@ open System.Net.Http.Headers
 open System.Text
 open System.Text.Json
 open System.IO
+open System.Text.Json.Serialization
 
 let BASE_URL = "https://api.spotify.com/v1"
+
+type baseSpotifyItem = { id: string; name: string }
+type ItemListResponse = { items: list<baseSpotifyItem> }
 
 let parseIntStrOption (s: string) =
     match s with
@@ -17,16 +21,21 @@ let parseIntStrOption (s: string) =
 let retrieveJson<'T> (filename: string) =
     let path = Path.Combine(Environment.CurrentDirectory, "responses", filename)
 
-    if File.Exists(path) then
-        try
-            let text = File.ReadAllText path
-            let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
-            Some(JsonSerializer.Deserialize<'T>(text, opts))
-        with _ ->
-            None
-    else
-        printfn "File %s does not exist." filename
-        None
+    let text = File.ReadAllText path
+    let opts = JsonFSharpOptions.Default().ToJsonSerializerOptions()
+    JsonSerializer.Deserialize<'T>(text, opts)
+
+let parseTopItems () =
+    let itemList = retrieveJson<ItemListResponse> "api_response.json"
+
+    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
+
+    let savePath =
+        Path.Combine(Environment.CurrentDirectory, "responses/parsed_item.json")
+
+    let opts = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
+    parsedList
 
 let sendGetRequest (url: string) =
     printfn "Sending GET to %s" url
@@ -194,15 +203,9 @@ type PaginatedResponse = { next: string; previous: string }
 
 let sendNextRequest () =
     let r = retrieveJson<PaginatedResponse> "api_response.json"
-
-    match r with
-    | Some r -> r.next |> sendGetRequest
-    | None -> printfn "error in json reading"
+    r.next |> sendGetRequest
 
 
 let sendPreviousRequest () =
     let r = retrieveJson<PaginatedResponse> "api_response.json"
-
-    match r with
-    | Some r -> r.previous |> sendGetRequest
-    | None -> printfn "error in json reading"
+    r.previous |> sendGetRequest

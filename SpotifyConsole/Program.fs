@@ -1,6 +1,7 @@
 module SpotifyConsole.Program
 
 open System
+open Base
 
 let commandList = [ "auth"; "search"; "tracks"; "user"; "next"; "prev" ]
 let tracksCmdList = [ "get" ]
@@ -30,7 +31,7 @@ let commandHelper argList =
     | "user" :: [] -> printCmdList userCmdList (Some "Endpoint for user actions.\nAvailable commands are:")
     | "user" :: subPath :: _ ->
         match subPath with
-        | "top" -> printfn "Get top items. Query structure -> user-top-type-limit-offset"
+        | "top" -> printfn "Get top items. Query structure -> user-top-type-timerange-limit-offset"
         | _ -> noCommandFound subPath
     | "next" :: _ -> printfn "Go to the next page of the last request"
     | "prev" :: _ -> printfn "Go to the previous page of the last request"
@@ -50,8 +51,8 @@ let commandInterpreter argList =
         match subPath with
         | "top" -> Users.getUsersTopItems query
         | _ -> noCommandFound subPath
-    | "next" :: _ -> Base.sendNextRequest ()
-    | "prev" :: _ -> Base.sendPreviousRequest ()
+    | "next" :: _ -> sendNextRequest ()
+    | "prev" :: _ -> sendPreviousRequest ()
     | other :: _ -> noCommandFound other
     | _ -> printfn "You need to send an instruction"
 
