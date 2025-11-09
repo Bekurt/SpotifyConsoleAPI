@@ -1,6 +1,23 @@
 module SpotifyConsole.Search
 
 open Base
+open System
+open System.Text.Json
+open System.IO
+
+type SearchItem = { id: string; name: string }
+type SearchResponse = { items: list<SearchItem> }
+
+let parseSearchItems () =
+    let itemList = retrieveJson<SearchResponse> "api_response.json"
+
+    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
+
+    let savePath =
+        Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
+
+    let opts = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
 
 let searchItems (query: list<string>) =
     let urlMapping =
@@ -29,5 +46,7 @@ let searchItems (query: list<string>) =
         urlMapping
         |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search" BASE_URL)
         |> sendGetRequest
+
+        parseSearchItems ()
     else
         failwith "Query is missing required parameters"
