@@ -2,6 +2,8 @@ module SpotifyConsole.Base
 
 open System
 open System.Net.Http
+open System.Net.Http.Headers
+open System.Text
 open System.Text.Json
 open System.IO
 
@@ -27,7 +29,7 @@ let retrieveJson<'T> (filename: string) =
         None
 
 let sendGetRequest (url: string) =
-    printfn "Sending request to %s" url
+    printfn "Sending GET to %s" url
 
     task {
         let token = Auth.getAccessToken ()
@@ -51,6 +53,97 @@ let sendGetRequest (url: string) =
         printfn "Success"
     }
 
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
+
+let sendPostRequest<'T> (url: string) (payload: 'T) =
+    printfn "Sending POST to %s" url
+
+    task {
+        let token = Auth.getAccessToken ()
+        use http = new HttpClient()
+        http.DefaultRequestHeaders.Authorization <- AuthenticationHeaderValue("Bearer", token)
+
+        let serOpts =
+            JsonSerializerOptions(PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = false)
+
+        let contentJson = JsonSerializer.Serialize(payload, serOpts)
+        use body = new StringContent(contentJson, Encoding.UTF8, "application/json")
+        use! resp = http.PostAsync(url, body)
+        let! bodyResp = resp.Content.ReadAsStringAsync()
+
+        if not resp.IsSuccessStatusCode then
+            failwithf "POST failed: %d - %s" (int resp.StatusCode) bodyResp
+
+        use doc = JsonDocument.Parse(bodyResp)
+
+        let savePath =
+            Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+        let opts = JsonSerializerOptions(WriteIndented = true)
+        File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+        printfn "POST Success"
+    }
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
+
+let sendPutRequest<'T> (url: string) (payload: 'T) =
+    printfn "Sending PUT to %s" url
+
+    task {
+        let token = Auth.getAccessToken ()
+        use http = new HttpClient()
+        http.DefaultRequestHeaders.Authorization <- AuthenticationHeaderValue("Bearer", token)
+
+        let serOpts =
+            JsonSerializerOptions(PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = false)
+
+        let contentJson = JsonSerializer.Serialize(payload, serOpts)
+        use body = new StringContent(contentJson, Encoding.UTF8, "application/json")
+        use! resp = http.PutAsync(url, body)
+        let! bodyResp = resp.Content.ReadAsStringAsync()
+
+        if not resp.IsSuccessStatusCode then
+            failwithf "PUT failed: %d - %s" (int resp.StatusCode) bodyResp
+
+        use doc = JsonDocument.Parse(bodyResp)
+
+        let savePath =
+            Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+        let opts = JsonSerializerOptions(WriteIndented = true)
+        File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+        printfn "PUT Success"
+    }
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
+
+let sendDeleteRequest (url: string) =
+    printfn "Sending DELETE to %s" url
+
+    task {
+        let token = Auth.getAccessToken ()
+        use http = new HttpClient()
+        http.DefaultRequestHeaders.Authorization <- AuthenticationHeaderValue("Bearer", token)
+
+        use! resp = http.DeleteAsync(url)
+        let! bodyResp = resp.Content.ReadAsStringAsync()
+
+        if not resp.IsSuccessStatusCode then
+            failwithf "DELETE failed: %d - %s" (int resp.StatusCode) bodyResp
+
+        // Some DELETE endpoints return no body; handle gracefully
+        if not (String.IsNullOrWhiteSpace bodyResp) then
+            use doc = JsonDocument.Parse(bodyResp)
+
+            let savePath =
+                Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+            let opts = JsonSerializerOptions(WriteIndented = true)
+            File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+
+        printfn "DELETE Success"
+    }
     |> Async.AwaitTask
     |> Async.RunSynchronously
 

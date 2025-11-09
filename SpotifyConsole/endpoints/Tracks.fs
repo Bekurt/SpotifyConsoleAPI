@@ -17,9 +17,6 @@ let getUsersSavedTracks (query: list<string>) =
                 | _ -> ""
             | _ -> "")
 
-
-    printfn "Sending request with parameters %A" urlMapping
-
     urlMapping
     |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/me/tracks" BASE_URL)
     |> sendGetRequest
