@@ -36,21 +36,30 @@ let sendGetRequest (url: string) =
         use http = new HttpClient()
         http.DefaultRequestHeaders.Authorization <- Headers.AuthenticationHeaderValue("Bearer", token)
 
-        use! resp = http.GetAsync(url)
-        let! body = resp.Content.ReadAsStringAsync()
+        let mutable completed = false
 
-        if not resp.IsSuccessStatusCode then
-            failwithf "Request failed: %d - %s" (int resp.StatusCode) body
+        while not completed do
+            use! resp = http.GetAsync(url)
 
-        use doc = JsonDocument.Parse(body)
+            if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                printfn "Rate limit reached (429). Retrying after %d seconds..." wait
+                do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
+            else
+                completed <- true
+                let! body = resp.Content.ReadAsStringAsync()
 
-        let savePath =
-            Path.Combine(Environment.CurrentDirectory, "responses/api_response.json")
+                if not resp.IsSuccessStatusCode then
+                    failwithf "Request failed: %d - %s" (int resp.StatusCode) body
 
-        let opts = JsonSerializerOptions(WriteIndented = true)
-        File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                use doc = JsonDocument.Parse body
 
-        printfn "Success"
+                let savePath =
+                    Path.Combine(Environment.CurrentDirectory, "responses/api_response.json")
+
+                let opts = JsonSerializerOptions(WriteIndented = true)
+                File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                printfn "GET Success"
     }
 
     |> Async.AwaitTask
@@ -69,20 +78,31 @@ let sendPostRequest<'T> (url: string) (payload: 'T) =
 
         let contentJson = JsonSerializer.Serialize(payload, serOpts)
         use body = new StringContent(contentJson, Encoding.UTF8, "application/json")
-        use! resp = http.PostAsync(url, body)
-        let! bodyResp = resp.Content.ReadAsStringAsync()
 
-        if not resp.IsSuccessStatusCode then
-            failwithf "POST failed: %d - %s" (int resp.StatusCode) bodyResp
+        let mutable completed = false
 
-        use doc = JsonDocument.Parse(bodyResp)
+        while not completed do
+            use! resp = http.PostAsync(url, body)
 
-        let savePath =
-            Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+            if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                printfn "Rate limit reached (429). Retrying after %d seconds..." wait
+                do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
+            else
+                completed <- true
+                let! bodyResp = resp.Content.ReadAsStringAsync()
 
-        let opts = JsonSerializerOptions(WriteIndented = true)
-        File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
-        printfn "POST Success"
+                if not resp.IsSuccessStatusCode then
+                    failwithf "POST failed: %d - %s" (int resp.StatusCode) bodyResp
+
+                use doc = JsonDocument.Parse bodyResp
+
+                let savePath =
+                    Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+                let opts = JsonSerializerOptions(WriteIndented = true)
+                File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                printfn "POST Success"
     }
     |> Async.AwaitTask
     |> Async.RunSynchronously
@@ -100,20 +120,31 @@ let sendPutRequest<'T> (url: string) (payload: 'T) =
 
         let contentJson = JsonSerializer.Serialize(payload, serOpts)
         use body = new StringContent(contentJson, Encoding.UTF8, "application/json")
-        use! resp = http.PutAsync(url, body)
-        let! bodyResp = resp.Content.ReadAsStringAsync()
 
-        if not resp.IsSuccessStatusCode then
-            failwithf "PUT failed: %d - %s" (int resp.StatusCode) bodyResp
+        let mutable completed = false
 
-        use doc = JsonDocument.Parse(bodyResp)
+        while not completed do
+            use! resp = http.PutAsync(url, body)
 
-        let savePath =
-            Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+            if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                printfn "Rate limit reached (429). Retrying after %d seconds..." wait
+                do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
+            else
+                completed <- true
+                let! bodyResp = resp.Content.ReadAsStringAsync()
 
-        let opts = JsonSerializerOptions(WriteIndented = true)
-        File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
-        printfn "PUT Success"
+                if not resp.IsSuccessStatusCode then
+                    failwithf "PUT failed: %d - %s" (int resp.StatusCode) bodyResp
+
+                use doc = JsonDocument.Parse bodyResp
+
+                let savePath =
+                    Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+                let opts = JsonSerializerOptions(WriteIndented = true)
+                File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                printfn "PUT Success"
     }
     |> Async.AwaitTask
     |> Async.RunSynchronously
@@ -126,23 +157,33 @@ let sendDeleteRequest (url: string) =
         use http = new HttpClient()
         http.DefaultRequestHeaders.Authorization <- AuthenticationHeaderValue("Bearer", token)
 
-        use! resp = http.DeleteAsync(url)
-        let! bodyResp = resp.Content.ReadAsStringAsync()
+        let mutable completed = false
 
-        if not resp.IsSuccessStatusCode then
-            failwithf "DELETE failed: %d - %s" (int resp.StatusCode) bodyResp
+        while not completed do
+            use! resp = http.DeleteAsync(url)
 
-        // Some DELETE endpoints return no body; handle gracefully
-        if not (String.IsNullOrWhiteSpace bodyResp) then
-            use doc = JsonDocument.Parse(bodyResp)
+            if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                printfn "Rate limit reached (429). Retrying after %d seconds..." wait
+                do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
+            else
+                completed <- true
+                let! bodyResp = resp.Content.ReadAsStringAsync()
 
-            let savePath =
-                Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+                if not resp.IsSuccessStatusCode then
+                    failwithf "DELETE failed: %d - %s" (int resp.StatusCode) bodyResp
 
-            let opts = JsonSerializerOptions(WriteIndented = true)
-            File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                // Some DELETE endpoints return no body; handle gracefully
+                if not (String.IsNullOrWhiteSpace bodyResp) then
+                    use doc = JsonDocument.Parse bodyResp
 
-        printfn "DELETE Success"
+                    let savePath =
+                        Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+                    let opts = JsonSerializerOptions(WriteIndented = true)
+                    File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+
+                printfn "DELETE Success"
     }
     |> Async.AwaitTask
     |> Async.RunSynchronously
