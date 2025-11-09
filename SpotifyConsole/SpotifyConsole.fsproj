@@ -11,5 +11,6 @@
     <Compile Include="Base.fs" />
     <Compile Include="endpoints\Search.fs" />
     <Compile Include="endpoints\Users.fs" />
+    <Compile Include="endpoints\Tracks.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup></Project>
