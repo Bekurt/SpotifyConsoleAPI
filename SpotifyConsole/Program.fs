@@ -4,7 +4,7 @@ open System
 open Base
 
 let commandList = [ "auth"; "search"; "tracks"; "user"; "next"; "prev" ]
-let tracksCmdList = [ "get"; "save" ]
+let tracksCmdList = [ "get"; "save"; "delete" ]
 let userCmdList = [ "top" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
@@ -22,17 +22,18 @@ let printCmdList (list: list<string>) (optionalString: string option) =
 let commandHelper argList =
     match argList with
     | "auth" :: _ -> printfn "Autenticate to the API. No other commands needed."
-    | "search" :: _ -> printfn "Search item. Query structure -> search-name-type-limit-offset"
+    | "search" :: _ -> printfn "Search item. Query structure -> search name type limit offset"
     | "tracks" :: [] -> printCmdList tracksCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
     | "tracks" :: subPath :: _ ->
         match subPath with
-        | "get" -> printfn "Get saved tracks. Query structure -> tracks-get-limit-offset"
-        | "save" -> printfn "Add tracks to saved. Query structure -> tracks-save"
+        | "get" -> printfn "Get saved tracks. Query structure -> tracks get limit offset"
+        | "save" -> printfn "Add tracks to saved. Query structure -> tracks save"
+        | "delete" -> printfn "Delete tracks from saved. Query structure -> tracks delete"
         | _ -> noCommandFound subPath
     | "user" :: [] -> printCmdList userCmdList (Some "Endpoint for user actions.\nAvailable commands are:")
     | "user" :: subPath :: _ ->
         match subPath with
-        | "top" -> printfn "Get top items. Query structure -> user-top-type-timerange-limit-offset"
+        | "top" -> printfn "Get top items. Query structure -> user top type timerange limit offset"
         | _ -> noCommandFound subPath
     | "next" :: _ -> printfn "Go to the next page of the last request"
     | "prev" :: _ -> printfn "Go to the previous page of the last request"
@@ -48,6 +49,7 @@ let commandInterpreter argList =
         match subPath with
         | "get" -> Tracks.getUsersSavedTracks query
         | "save" -> Tracks.saveTracks ()
+        | "delete" -> Tracks.deleteTracks ()
         | _ -> noCommandFound subPath
     | "user" :: subPath :: query ->
         match subPath with

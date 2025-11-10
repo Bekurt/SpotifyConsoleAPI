@@ -50,3 +50,10 @@ let saveTracks () =
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
     sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body
+
+let deleteTracks () =
+    let tracks = retrieveJson<list<ParsedResponse>> "parsed_response.json"
+
+    let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
+
+    sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body)

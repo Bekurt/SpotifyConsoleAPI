@@ -161,7 +161,8 @@ let sendPutRequest<'T> (url: string) (payload: 'T) =
     |> Async.AwaitTask
     |> Async.RunSynchronously
 
-let sendDeleteRequest (url: string) =
+
+let sendDeleteRequest<'T> (url: string) (payload: 'T option) =
     printfn "Sending DELETE to %s" url
 
     task {
@@ -169,10 +170,23 @@ let sendDeleteRequest (url: string) =
         use http = new HttpClient()
         http.DefaultRequestHeaders.Authorization <- AuthenticationHeaderValue("Bearer", token)
 
+        let serOpts =
+            JsonSerializerOptions(PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = false)
+
         let mutable completed = false
 
         while not completed do
-            use! resp = http.DeleteAsync(url)
+            // create a fresh request message each attempt
+            use req = new HttpRequestMessage(HttpMethod.Delete, url)
+
+            // if a payload is provided, serialize and attach it
+            match payload with
+            | Some p ->
+                let contentJson = JsonSerializer.Serialize(p, serOpts)
+                req.Content <- new StringContent(contentJson, Encoding.UTF8, "application/json")
+            | None -> ()
+
+            use! resp = http.SendAsync(req)
 
             if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
                 let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
@@ -186,12 +200,13 @@ let sendDeleteRequest (url: string) =
                     failwithf "DELETE failed: %d - %s" (int resp.StatusCode) bodyResp
 
                 // Some DELETE endpoints return no body; handle gracefully
-                if not (String.IsNullOrWhiteSpace bodyResp) then
+                let savePath =
+                    Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
+
+                if String.IsNullOrWhiteSpace bodyResp then
+                    File.WriteAllText(savePath, "")
+                else
                     use doc = JsonDocument.Parse bodyResp
-
-                    let savePath =
-                        Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
-
                     let opts = JsonSerializerOptions(WriteIndented = true)
                     File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
 
