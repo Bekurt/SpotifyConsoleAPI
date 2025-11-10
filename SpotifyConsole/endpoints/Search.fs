@@ -6,12 +6,24 @@ open System.Text.Json
 open System.IO
 
 type SearchItem = { id: string; name: string }
-type SearchResponse = { items: list<SearchItem> }
+type SearchItemList = { items: list<SearchItem> }
 
-let parseSearchItems () =
+type SearchResponse =
+    { tracks: SearchItemList
+      albums: SearchItemList
+      playlists: SearchItemList
+      artists: SearchItemList }
+
+let parseSearchItems (itemType: string) =
     let itemList = retrieveJson<SearchResponse> "api_response.json"
 
-    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
+    let parsedList =
+        match itemType with
+        | "&type=track" -> itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=artist" -> itemList.artists.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=album" -> itemList.albums.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=playlist" -> itemList.playlists.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | _ -> itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
 
     let savePath =
         Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
@@ -47,6 +59,6 @@ let searchItems (query: list<string>) =
         |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search" BASE_URL)
         |> sendGetRequest
 
-        parseSearchItems ()
+        parseSearchItems (urlMapping.Item 0)
     else
         failwith "Query is missing required parameters"
