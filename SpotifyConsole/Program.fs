@@ -61,7 +61,9 @@ let commandInterpreter argList =
 let rec interactiveLoop () =
     printf "> "
 
-    match Console.ReadLine().Split "-" |> Array.toList with
+    let sep = "-"
+
+    match Console.ReadLine().Split sep |> Array.toList with
     | "exit" :: _ -> printfn "Goodbye"
     | "quit" :: _ -> printfn "Goodbye"
     | cmd ->
@@ -71,10 +73,11 @@ let rec interactiveLoop () =
 [<EntryPoint>]
 let main argv =
     try
-        printf "Welcome to the interactive console. Type 'exit' or 'quit' to exit\n"
-        interactiveLoop ()
+        //printf "Welcome to the interactive console. Type 'exit' or 'quit' to exit\n"
+        //interactiveLoop ()
+        commandInterpreter (argv |> Array.toList)
         0
     with ex ->
         printfn "Error: %s\n" ex.Message
-        interactiveLoop ()
+        //interactiveLoop ()
         1
