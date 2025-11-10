@@ -55,8 +55,14 @@ let sendGetRequest (url: string) =
                 let opts = JsonSerializerOptions(WriteIndented = true)
                 File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
 
-                let total = doc.RootElement.GetProperty("total").GetInt32()
-                printfn "GET Success. %d results" total
+
+                let total =
+                    if doc.RootElement.TryGetProperty "total" |> fst then
+                        doc.RootElement.GetProperty("total").ToString()
+                    else
+                        "No total available for these"
+
+                printfn "GET Success. %s results" total
     }
 
     |> Async.AwaitTask
@@ -92,13 +98,16 @@ let sendPostRequest<'T> (url: string) (payload: 'T) =
                 if not resp.IsSuccessStatusCode then
                     failwithf "POST failed: %d - %s" (int resp.StatusCode) bodyResp
 
-                use doc = JsonDocument.Parse bodyResp
-
                 let savePath =
                     Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
 
-                let opts = JsonSerializerOptions(WriteIndented = true)
-                File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                if String.IsNullOrWhiteSpace bodyResp then
+                    File.WriteAllText(savePath, "")
+                else
+                    use doc = JsonDocument.Parse bodyResp
+                    let opts = JsonSerializerOptions(WriteIndented = true)
+                    File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+
                 printfn "POST Success"
     }
     |> Async.AwaitTask
@@ -134,13 +143,19 @@ let sendPutRequest<'T> (url: string) (payload: 'T) =
                 if not resp.IsSuccessStatusCode then
                     failwithf "PUT failed: %d - %s" (int resp.StatusCode) bodyResp
 
-                use doc = JsonDocument.Parse bodyResp
-
                 let savePath =
                     Path.Combine(Environment.CurrentDirectory, "responses", "api_response.json")
 
-                let opts = JsonSerializerOptions(WriteIndented = true)
-                File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+                // Some endpoints (e.g. PUT /me/tracks) return 200 with an empty body.
+                // Avoid parsing empty responses as JSON which throws an exception.
+                if String.IsNullOrWhiteSpace bodyResp then
+                    // write an empty file or clear previous response
+                    File.WriteAllText(savePath, "")
+                else
+                    use doc = JsonDocument.Parse bodyResp
+                    let opts = JsonSerializerOptions(WriteIndented = true)
+                    File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
+
                 printfn "PUT Success"
     }
     |> Async.AwaitTask
