@@ -9,7 +9,7 @@ type Track = { id: string; name: string }
 type SavedItem = { added_at: string; track: Track }
 type SavedResponse = { items: list<SavedItem> }
 
-let parseSavedTracks () =
+let parseTracks () =
     let itemList = retrieveJson<SavedResponse> "api_response.json"
 
     let parsedList =
@@ -21,7 +21,7 @@ let parseSavedTracks () =
     let opts = JsonSerializerOptions(WriteIndented = true)
     File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
 
-let getUsersSavedTracks (query: list<string>) =
+let getTracks (query: list<string>) =
     let urlMapping =
         query
         |> List.mapi (fun i s ->
@@ -40,7 +40,7 @@ let getUsersSavedTracks (query: list<string>) =
     |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/me/tracks" BASE_URL)
     |> sendGetRequest
 
-    parseSavedTracks ()
+    parseTracks ()
 
 type SaveBody = { ids: list<string> }
 
@@ -57,3 +57,32 @@ let deleteTracks () =
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
     sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body)
+
+type CheckResponse = { items: list<bool> }
+type ReadableResponse = { isSaved: bool; name: string }
+
+let makeReadable () =
+    let itemList = retrieveJson<CheckResponse> "api_response.json"
+    let inputList = retrieveJson<list<Track>> "parsed_response.json"
+
+    let parsedList =
+        itemList.items
+        |> List.mapi (fun idx item ->
+            { isSaved = item
+              name = (inputList.Item idx).name })
+
+    let savePath =
+        Path.Combine(Environment.CurrentDirectory, "responses/api_response.json")
+
+    let opts = JsonSerializerOptions(WriteIndented = true)
+    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
+
+let checkTracks () =
+    let tracks = retrieveJson<list<ParsedResponse>> "parsed_response.json"
+
+    tracks
+    |> List.fold (fun s i -> s + i.id + ",") ""
+    |> sprintf "%s/me/tracks/contains?ids=%s" BASE_URL
+    |> sendGetRequestArrayResponse (Some true)
+
+    makeReadable ()

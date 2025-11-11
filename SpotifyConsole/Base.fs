@@ -23,7 +23,7 @@ let retrieveJson<'T> (filename: string) =
     let opts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
     JsonSerializer.Deserialize<'T>(text, opts)
 
-let sendGetRequest (url: string) =
+let sendGetRequestArrayResponse (isRespArray: bool option) (url: string) =
     printfn "Sending GET to %s" url
 
     task {
@@ -47,7 +47,10 @@ let sendGetRequest (url: string) =
                 if not resp.IsSuccessStatusCode then
                     failwithf "Request failed: %d - %s" (int resp.StatusCode) body
 
-                use doc = JsonDocument.Parse body
+                use doc =
+                    match isRespArray with
+                    | Some b -> JsonDocument.Parse(sprintf "{\"items\": %s}" body)
+                    | None -> JsonDocument.Parse body
 
                 let savePath =
                     Path.Combine(Environment.CurrentDirectory, "responses/api_response.json")
@@ -67,6 +70,8 @@ let sendGetRequest (url: string) =
 
     |> Async.AwaitTask
     |> Async.RunSynchronously
+
+let sendGetRequest (url: string) = url |> sendGetRequestArrayResponse None
 
 let sendPostRequest<'T> (url: string) (payload: 'T) =
     printfn "Sending POST to %s" url
