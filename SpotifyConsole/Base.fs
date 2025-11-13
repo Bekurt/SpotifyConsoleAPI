@@ -9,7 +9,17 @@ open System.IO
 
 let BASE_URL = "https://api.spotify.com/v1"
 
-type ParsedResponse = { id: string; name: string }
+type Item = { id: string; name: string }
+type ItemResponse = { items: list<Item>; total: int }
+type SavedItem = { added_at: string; track: Item }
+type SavedResponse = { items: list<SavedItem>; total: int }
+type SaveBody = { ids: list<string> }
+
+type SearchResponse =
+    { tracks: ItemResponse
+      albums: ItemResponse
+      playlists: ItemResponse
+      artists: ItemResponse }
 
 let parseIntStrOption (s: string) =
     match s with

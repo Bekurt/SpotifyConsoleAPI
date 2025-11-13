@@ -5,11 +5,6 @@ open System
 open System.Text.Json
 open System.IO
 
-type Track = { id: string; name: string }
-type SavedItem = { added_at: string; track: Track }
-
-type SavedResponse = { items: list<SavedItem>; total: int }
-
 let parseTracks () =
     let itemList = retrieveJson<SavedResponse> "api_response.json"
 
@@ -45,17 +40,15 @@ let getTracks (query: list<string>) =
 
     parseTracks ()
 
-type SaveBody = { ids: list<string> }
-
 let saveTracks () =
-    let tracks = retrieveJson<list<ParsedResponse>> "parsed_response.json"
+    let tracks = retrieveJson<list<Item>> "parsed_response.json"
 
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
     sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body
 
 let deleteTracks () =
-    let tracks = retrieveJson<list<ParsedResponse>> "parsed_response.json"
+    let tracks = retrieveJson<list<Item>> "parsed_response.json"
 
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
@@ -66,7 +59,7 @@ type ReadableResponse = { isSaved: bool; name: string }
 
 let makeReadable () =
     let itemList = retrieveJson<CheckResponse> "api_response.json"
-    let inputList = retrieveJson<list<Track>> "parsed_response.json"
+    let inputList = retrieveJson<list<Item>> "parsed_response.json"
 
     let parsedList =
         itemList.items
@@ -81,7 +74,7 @@ let makeReadable () =
     File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
 
 let checkTracks () =
-    let tracks = retrieveJson<list<ParsedResponse>> "parsed_response.json"
+    let tracks = retrieveJson<list<Item>> "parsed_response.json"
 
     tracks
     |> List.fold (fun s i -> s + i.id + ",") ""

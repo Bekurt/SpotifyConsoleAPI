@@ -5,16 +5,6 @@ open System
 open System.Text.Json
 open System.IO
 
-type SearchItem = { id: string; name: string }
-
-type SearchItemList = { items: list<SearchItem>; total: int }
-
-type SearchResponse =
-    { tracks: SearchItemList
-      albums: SearchItemList
-      playlists: SearchItemList
-      artists: SearchItemList }
-
 let parseSearchItems (itemType: string) =
     let itemList = retrieveJson<SearchResponse> "api_response.json"
 

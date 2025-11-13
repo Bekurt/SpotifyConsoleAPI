@@ -5,11 +5,8 @@ open System
 open System.Text.Json
 open System.IO
 
-type Item = { id: string; name: string }
-type TopResponse = { items: list<Item>; total: int }
-
 let parseTopItems () =
-    let itemList = retrieveJson<TopResponse> "api_response.json"
+    let itemList = retrieveJson<ItemResponse> "api_response.json"
 
     printfn "Found %d results" itemList.total
 
