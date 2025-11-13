@@ -3,8 +3,11 @@ module SpotifyConsole.Program
 open System
 open Base
 
-let commandList = [ "auth"; "albums"; "search"; "tracks"; "user"; "next"; "prev" ]
+let commandList =
+    [ "auth"; "albums"; "artists"; "search"; "tracks"; "user"; "next"; "prev" ]
+
 let albumsCmdList = [ "tracks" ]
+let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
 
@@ -23,10 +26,15 @@ let printCmdList (list: list<string>) (optionalString: string option) =
 let commandHelper argList =
     match argList with
     | "auth" :: _ -> printfn "Autenticate to the API. No other commands needed."
-    | "albums" :: [] -> printCmdList albumsCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
+    | "albums" :: [] -> printCmdList albumsCmdList (Some "Endpoint for album queries.\nAvailable commands are:")
     | "albums" :: subPath :: _ ->
         match subPath with
         | "tracks" -> printfn "Get album tracks. Query structure -> albums tracks limit offset"
+        | _ -> noCommandFound subPath
+    | "artists" :: [] -> printCmdList artistCmdList (Some "Endpoint for artist queries.\nAvailable commands are:")
+    | "artists" :: subPath :: _ ->
+        match subPath with
+        | "tracks" -> printfn "Get artit albums. Query structure -> artist albums limit offset"
         | _ -> noCommandFound subPath
     | "search" :: _ -> printfn "Search item. Query structure -> search name type limit offset"
     | "tracks" :: [] -> printCmdList tracksCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
@@ -54,6 +62,10 @@ let commandInterpreter argList =
     | "albums" :: subPath :: query ->
         match subPath with
         | "tracks" -> Albums.getAlbumTracks query
+        | _ -> noCommandFound subPath
+    | "artists" :: subPath :: query ->
+        match subPath with
+        | "albums" -> Artists.getArtistAlbums query
         | _ -> noCommandFound subPath
     | "search" :: query -> Search.searchItems query
     | "tracks" :: subPath :: query ->
