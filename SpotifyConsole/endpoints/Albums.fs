@@ -20,9 +20,9 @@ let parseAlbum () =
 
 
 let getAlbumTracks (query: list<string>) =
-    let albumResponse = retrieveJson<SearchResponse> "parsed_response.json"
+    let albumResponse = retrieveJson<ParsedResponse> "parsed_response.json"
 
-    let albumId = albumResponse.albums.items.Head.id
+    let albumId = albumResponse.Head.id
 
     let urlMapping =
         query

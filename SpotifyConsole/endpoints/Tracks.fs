@@ -41,14 +41,14 @@ let getTracks (query: list<string>) =
     parseTracks ()
 
 let saveTracks () =
-    let tracks = retrieveJson<list<Item>> "parsed_response.json"
+    let tracks = retrieveJson<ParsedResponse> "parsed_response.json"
 
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
     sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body
 
 let deleteTracks () =
-    let tracks = retrieveJson<list<Item>> "parsed_response.json"
+    let tracks = retrieveJson<ParsedResponse> "parsed_response.json"
 
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
@@ -59,7 +59,7 @@ type ReadableResponse = { isSaved: bool; name: string }
 
 let makeReadable () =
     let itemList = retrieveJson<CheckResponse> "api_response.json"
-    let inputList = retrieveJson<list<Item>> "parsed_response.json"
+    let inputList = retrieveJson<ParsedResponse> "parsed_response.json"
 
     let parsedList =
         itemList.items

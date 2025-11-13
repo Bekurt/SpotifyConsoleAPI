@@ -11,6 +11,8 @@ let BASE_URL = "https://api.spotify.com/v1"
 
 type Item = { id: string; name: string }
 type ItemResponse = { items: list<Item>; total: int }
+type ParsedResponse = list<Item>
+
 type SavedItem = { added_at: string; track: Item }
 type SavedResponse = { items: list<SavedItem>; total: int }
 type SaveBody = { ids: list<string> }

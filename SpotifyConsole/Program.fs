@@ -3,7 +3,8 @@ module SpotifyConsole.Program
 open System
 open Base
 
-let commandList = [ "auth"; "search"; "tracks"; "user"; "next"; "prev" ]
+let commandList = [ "auth"; "albums"; "search"; "tracks"; "user"; "next"; "prev" ]
+let albumsCmdList = [ "tracks" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
 
@@ -22,6 +23,11 @@ let printCmdList (list: list<string>) (optionalString: string option) =
 let commandHelper argList =
     match argList with
     | "auth" :: _ -> printfn "Autenticate to the API. No other commands needed."
+    | "albums" :: [] -> printCmdList albumsCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
+    | "albums" :: subPath :: _ ->
+        match subPath with
+        | "tracks" -> printfn "Get album tracks. Query structure -> albums tracks limit offset"
+        | _ -> noCommandFound subPath
     | "search" :: _ -> printfn "Search item. Query structure -> search name type limit offset"
     | "tracks" :: [] -> printCmdList tracksCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
     | "tracks" :: subPath :: _ ->
@@ -45,6 +51,10 @@ let commandInterpreter argList =
     match argList with
     | "help" :: subCommand -> commandHelper subCommand
     | "auth" :: _ -> Auth.authorizeAsync () |> Async.AwaitTask |> Async.RunSynchronously
+    | "albums" :: subPath :: query ->
+        match subPath with
+        | "tracks" -> Albums.getAlbumTracks query
+        | _ -> noCommandFound subPath
     | "search" :: query -> Search.searchItems query
     | "tracks" :: subPath :: query ->
         match subPath with
