@@ -6,7 +6,8 @@ open System.Text.Json
 open System.IO
 
 type SearchItem = { id: string; name: string }
-type SearchItemList = { items: list<SearchItem> }
+
+type SearchItemList = { items: list<SearchItem>; total: int }
 
 type SearchResponse =
     { tracks: SearchItemList
@@ -19,11 +20,21 @@ let parseSearchItems (itemType: string) =
 
     let parsedList =
         match itemType with
-        | "&type=track" -> itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | "&type=artist" -> itemList.artists.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | "&type=album" -> itemList.albums.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | "&type=playlist" -> itemList.playlists.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | _ -> itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=track" ->
+            printfn "Found %d results" itemList.tracks.total
+            itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=artist" ->
+            printfn "Found %d results" itemList.artists.total
+            itemList.artists.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=album" ->
+            printfn "Found %d results" itemList.albums.total
+            itemList.albums.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | "&type=playlist" ->
+            printfn "Found %d results" itemList.playlists.total
+            itemList.playlists.items |> List.map (fun i -> { id = i.id; name = i.name })
+        | _ ->
+            printfn "How the fuck did you get here?"
+            itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
 
     let savePath =
         Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
@@ -59,6 +70,6 @@ let searchItems (query: list<string>) =
         |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search" BASE_URL)
         |> sendGetRequest
 
-        parseSearchItems (urlMapping.Item 0)
+        parseSearchItems (urlMapping.Item 1)
     else
         failwith "Query is missing required parameters"

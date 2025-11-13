@@ -58,14 +58,7 @@ let sendGetRequestArrayResponse (isRespArray: bool option) (url: string) =
                 let opts = JsonSerializerOptions(WriteIndented = true)
                 File.WriteAllText(savePath, JsonSerializer.Serialize(doc, opts))
 
-
-                let total =
-                    if doc.RootElement.TryGetProperty "total" |> fst then
-                        doc.RootElement.GetProperty("total").ToString()
-                    else
-                        "No total available for these"
-
-                printfn "GET Success. %s results" total
+                printfn "GET Success"
     }
 
     |> Async.AwaitTask

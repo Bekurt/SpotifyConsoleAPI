@@ -7,10 +7,13 @@ open System.IO
 
 type Track = { id: string; name: string }
 type SavedItem = { added_at: string; track: Track }
-type SavedResponse = { items: list<SavedItem> }
+
+type SavedResponse = { items: list<SavedItem>; total: int }
 
 let parseTracks () =
     let itemList = retrieveJson<SavedResponse> "api_response.json"
+
+    printfn "Found %d results" itemList.total
 
     let parsedList =
         itemList.items |> List.map (fun i -> { id = i.track.id; name = i.track.name })
