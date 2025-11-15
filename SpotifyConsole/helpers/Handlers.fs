@@ -1,4 +1,4 @@
-module SpotifyConsole.ResponseHandlers
+module SpotifyConsole.Handlers
 
 open Base
 open System

@@ -98,8 +98,8 @@ let commandInterpreter argList =
     | "prev" :: _ -> sendPreviousRequest ()
     | "resp" :: subPath :: _ ->
         match subPath with
-        | "fold" -> ResponseHandlers.cumulateResponse ()
-        | "clear" -> ResponseHandlers.clearResponse ()
+        | "fold" -> Handlers.cumulateResponse ()
+        | "clear" -> Handlers.clearResponse ()
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
     | _ -> printfn "You need to send an instruction"
