@@ -1,22 +1,10 @@
 module SpotifyConsole.Albums
 
 open Base
-open System
-open System.Text.Json
-open System.IO
-
-let parseAlbum () =
-    let itemList = retrieveJson<ItemResponse> "api_response.json"
-
-    printfn "Found %d results" itemList.total
-
-    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
-
-    writeJson "parsed_response.json" parsedList
-
+open Parsers
 
 let getAlbumTracks (query: list<string>) =
-    let albumResponse = retrieveJson<ParsedResponse> "parsed_response.json"
+    let albumResponse = retrieveJson<ParsedResponse> "parsed.json"
 
     let albumId = albumResponse.Head.id
 
@@ -38,4 +26,4 @@ let getAlbumTracks (query: list<string>) =
     |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/albums/%s/tracks" BASE_URL albumId)
     |> sendGetRequest
 
-    parseAlbum ()
+    retrieveJson<PagesOf<Track>> "api.json" |> parseTrack

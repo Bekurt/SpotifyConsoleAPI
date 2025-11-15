@@ -9,12 +9,13 @@
   <ItemGroup>
     <Compile Include="endpoints/Auth.fs" />
     <Compile Include="helpers/Base.fs" />
+    <Compile Include="helpers/Parsers.fs" />
+    <Compile Include="helpers/Handlers.fs" />
     <Compile Include="endpoints/Search.fs" />
     <Compile Include="endpoints/Albums.fs" />
     <Compile Include="endpoints/Artists.fs" />
     <Compile Include="endpoints/Tracks.fs" />
     <Compile Include="endpoints/Users.fs" />
-    <Compile Include="helpers/Handlers.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

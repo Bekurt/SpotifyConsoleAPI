@@ -1,18 +1,9 @@
 module SpotifyConsole.Program
 
 open System
-open Base
 
 let commandList =
-    [ "auth"
-      "albums"
-      "artists"
-      "search"
-      "tracks"
-      "user"
-      "next"
-      "prev"
-      "resp" ]
+    [ "auth"; "albums"; "artists"; "search"; "tracks"; "user"; "resp" ]
 
 let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
@@ -59,8 +50,6 @@ let commandHelper argList =
         match subPath with
         | "top" -> printfn "Get top items. Query structure -> user top type timerange limit offset"
         | _ -> noCommandFound subPath
-    | "next" :: _ -> printfn "Go to the next page of the last request"
-    | "prev" :: _ -> printfn "Go to the previous page of the last request"
     | "resp" :: [] -> printCmdList respCmdList (Some "Response handling.\nAvailable commands are:")
     | "resp" :: subPath :: _ ->
         match subPath with
@@ -94,8 +83,6 @@ let commandInterpreter argList =
         match subPath with
         | "top" -> Users.getUsersTopItems query
         | _ -> noCommandFound subPath
-    | "next" :: _ -> sendNextRequest ()
-    | "prev" :: _ -> sendPreviousRequest ()
     | "resp" :: subPath :: _ ->
         match subPath with
         | "fold" -> Handlers.cumulateResponse ()

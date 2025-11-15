@@ -1,26 +1,10 @@
 module SpotifyConsole.Artists
 
 open Base
-open System
-open System.Text.Json
-open System.IO
-
-let parseArtist () =
-    let itemList = retrieveJson<ItemResponse> "api_response.json"
-
-    printfn "Found %d results" itemList.total
-
-    let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
-
-    let savePath =
-        Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
-
-    let opts = JsonSerializerOptions(WriteIndented = true)
-    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
-
+open Parsers
 
 let getArtistAlbums (query: list<string>) =
-    let artistResponse = retrieveJson<ParsedResponse> "parsed_response.json"
+    let artistResponse = retrieveJson<ParsedResponse> "parsed.json"
 
     let artistId = artistResponse.Head.id
 
@@ -44,4 +28,4 @@ let getArtistAlbums (query: list<string>) =
         (sprintf "%s/artists/%s/albums?include_groups=album" BASE_URL artistId)
     |> sendGetRequest
 
-    parseArtist ()
+    retrieveJson<PagesOf<Album>> "api.json" |> parseAlbum

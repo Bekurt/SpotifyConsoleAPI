@@ -1,36 +1,7 @@
 module SpotifyConsole.Search
 
 open Base
-open System
-open System.Text.Json
-open System.IO
-
-let parseSearchItems (itemType: string) =
-    let itemList = retrieveJson<SearchResponse> "api_response.json"
-
-    let parsedList =
-        match itemType with
-        | "&type=track" ->
-            printfn "Found %d results" itemList.tracks.total
-            itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | "&type=artist" ->
-            printfn "Found %d results" itemList.artists.total
-            itemList.artists.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | "&type=album" ->
-            printfn "Found %d results" itemList.albums.total
-            itemList.albums.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | "&type=playlist" ->
-            printfn "Found %d results" itemList.playlists.total
-            itemList.playlists.items |> List.map (fun i -> { id = i.id; name = i.name })
-        | _ ->
-            printfn "How the fuck did you get here?"
-            itemList.tracks.items |> List.map (fun i -> { id = i.id; name = i.name })
-
-    let savePath =
-        Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
-
-    let opts = JsonSerializerOptions(WriteIndented = true)
-    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
+open Parsers
 
 let searchItems (query: list<string>) =
     let urlMapping =
@@ -60,6 +31,10 @@ let searchItems (query: list<string>) =
         |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/search" BASE_URL)
         |> sendGetRequest
 
-        parseSearchItems (urlMapping.Item 1)
+        match urlMapping.Item 1 with
+        | "&type=track" -> (retrieveJson<SearchResponse> "api.json").tracks |> parseTrack
+        | "&type=artist" -> (retrieveJson<SearchResponse> "api.json").artists |> parseArtist
+        | "&type=album" -> (retrieveJson<SearchResponse> "api.json").albums |> parseAlbum
+        | _ -> (retrieveJson<SearchResponse> "api.json").tracks |> parseTrack
     else
         failwith "Query is missing required parameters"

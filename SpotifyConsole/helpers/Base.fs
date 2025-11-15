@@ -9,20 +9,6 @@ open System.IO
 
 let BASE_URL = "https://api.spotify.com/v1"
 
-type Item = { id: string; name: string }
-type ItemResponse = { items: list<Item>; total: int }
-type ParsedResponse = list<Item>
-
-type SavedItem = { added_at: string; track: Item }
-type SavedResponse = { items: list<SavedItem>; total: int }
-type SaveBody = { ids: list<string> }
-
-type SearchResponse =
-    { tracks: ItemResponse
-      albums: ItemResponse
-      playlists: ItemResponse
-      artists: ItemResponse }
-
 let parseIntStrOption (s: string) =
     match s with
     | "" -> None
@@ -70,7 +56,7 @@ let sendGetRequestArrayResponse (isRespArray: bool option) (url: string) =
                     | Some b -> JsonDocument.Parse(sprintf "{\"items\": %s}" body)
                     | None -> JsonDocument.Parse body
 
-                writeJson "api_response.json" doc
+                writeJson "api.json" doc
 
                 printfn "GET Success"
     }
@@ -111,9 +97,9 @@ let sendPostRequest<'T> (url: string) (payload: 'T) =
                     failwithf "POST failed: %d - %s" (int resp.StatusCode) bodyResp
 
                 if String.IsNullOrWhiteSpace bodyResp then
-                    writeJson "api_response.json" ""
+                    writeJson "api.json" ""
                 else
-                    writeJson "api_response.json" bodyResp
+                    writeJson "api.json" bodyResp
 
                 printfn "POST Success"
     }
@@ -151,9 +137,9 @@ let sendPutRequest<'T> (url: string) (payload: 'T) =
                     failwithf "PUT failed: %d - %s" (int resp.StatusCode) bodyResp
 
                 if String.IsNullOrWhiteSpace bodyResp then
-                    writeJson "api_response.json" ""
+                    writeJson "api.json" ""
                 else
-                    writeJson "api_response.json" bodyResp
+                    writeJson "api.json" bodyResp
 
                 printfn "PUT Success"
     }
@@ -199,22 +185,11 @@ let sendDeleteRequest<'T> (url: string) (payload: 'T option) =
                     failwithf "DELETE failed: %d - %s" (int resp.StatusCode) bodyResp
 
                 if String.IsNullOrWhiteSpace bodyResp then
-                    writeJson "api_response.json" ""
+                    writeJson "api.json" ""
                 else
-                    writeJson "api_response.json" bodyResp
+                    writeJson "api.json" bodyResp
 
                 printfn "DELETE Success"
     }
     |> Async.AwaitTask
     |> Async.RunSynchronously
-
-type PaginatedResponse = { next: string; previous: string }
-
-let sendNextRequest () =
-    let r = retrieveJson<PaginatedResponse> "api_response.json"
-    r.next |> sendGetRequest
-
-
-let sendPreviousRequest () =
-    let r = retrieveJson<PaginatedResponse> "api_response.json"
-    r.previous |> sendGetRequest
