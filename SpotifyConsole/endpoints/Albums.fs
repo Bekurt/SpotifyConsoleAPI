@@ -12,11 +12,7 @@ let parseAlbum () =
 
     let parsedList = itemList.items |> List.map (fun i -> { id = i.id; name = i.name })
 
-    let savePath =
-        Path.Combine(Environment.CurrentDirectory, "responses/parsed_response.json")
-
-    let opts = JsonSerializerOptions(WriteIndented = true)
-    File.WriteAllText(savePath, JsonSerializer.Serialize(parsedList, opts))
+    writeJson "parsed_response.json" parsedList
 
 
 let getAlbumTracks (query: list<string>) =

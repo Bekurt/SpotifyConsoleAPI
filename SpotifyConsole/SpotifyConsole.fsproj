@@ -14,6 +14,7 @@
     <Compile Include="endpoints/Artists.fs" />
     <Compile Include="endpoints/Tracks.fs" />
     <Compile Include="endpoints/Users.fs" />
+    <Compile Include="helpers/ResponseHandlers.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

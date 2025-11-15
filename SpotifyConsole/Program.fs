@@ -4,12 +4,21 @@ open System
 open Base
 
 let commandList =
-    [ "auth"; "albums"; "artists"; "search"; "tracks"; "user"; "next"; "prev" ]
+    [ "auth"
+      "albums"
+      "artists"
+      "search"
+      "tracks"
+      "user"
+      "next"
+      "prev"
+      "resp" ]
 
 let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
+let respCmdList = [ "fold"; "clear" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
 
@@ -52,6 +61,12 @@ let commandHelper argList =
         | _ -> noCommandFound subPath
     | "next" :: _ -> printfn "Go to the next page of the last request"
     | "prev" :: _ -> printfn "Go to the previous page of the last request"
+    | "resp" :: [] -> printCmdList respCmdList (Some "Response handling.\nAvailable commands are:")
+    | "resp" :: subPath :: _ ->
+        match subPath with
+        | "fold" -> printfn "Adds current parsed response to cumulative_response.json"
+        | "clear" -> printfn "Clears cumulative_response.json"
+        | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
     | _ -> printCmdList commandList None
 
@@ -81,6 +96,11 @@ let commandInterpreter argList =
         | _ -> noCommandFound subPath
     | "next" :: _ -> sendNextRequest ()
     | "prev" :: _ -> sendPreviousRequest ()
+    | "resp" :: subPath :: _ ->
+        match subPath with
+        | "fold" -> ResponseHandlers.cumulateResponse ()
+        | "clear" -> ResponseHandlers.clearResponse ()
+        | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
     | _ -> printfn "You need to send an instruction"
 
