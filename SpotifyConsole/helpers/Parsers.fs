@@ -31,25 +31,12 @@ type Track =
 
 type SavedTrack = { added_at: string; track: Track }
 
-type SearchResponse =
-    { tracks: PagesOf<Track>
-      albums: PagesOf<Album>
-      artists: PagesOf<Artist> }
+type TrackSearch = { tracks: PagesOf<Track> }
+type AlbumSearch = { albums: PagesOf<Album> }
+type ArtistSearch = { artists: PagesOf<Artist> }
 
 type ParsedItem = { idx: int; id: string; name: string }
 type ParsedResponse = list<ParsedItem>
-
-let parsePagesOf<'T> (parserOfT: 'T -> 'T) (pages: PagesOf<'T>) =
-    printfn "Found %d results" pages.total
-
-    writeJson
-        "api.json"
-        { limit = pages.limit
-          next = pages.next
-          offset = pages.offset
-          previous = pages.previous
-          total = pages.total
-          items = pages.items |> List.map parserOfT }
 
 let albumParser (album: Album) =
     { album_type = album.album_type
@@ -63,7 +50,7 @@ let artistParser (artist: Artist) = { id = artist.id; name = artist.name }
 
 let trackParser (track: Track) =
     { artists = track.artists |> List.map artistParser
-      album = track.album
+      album = track.album |> albumParser
       disc_number = track.disc_number
       duration_ms = track.duration_ms
       id = track.id
@@ -76,17 +63,89 @@ let savedTrackParser (savedTrack: SavedTrack) =
     { added_at = savedTrack.added_at
       track =
         { artists = track.artists |> List.map artistParser
-          album = track.album
+          album = track.album |> albumParser
           disc_number = track.disc_number
           duration_ms = track.duration_ms
           id = track.id
           name = track.name
           track_number = track.track_number } }
 
-let parseAlbum = parsePagesOf<Album> albumParser
-let parseArtist = parsePagesOf<Artist> artistParser
-let parseTrack = parsePagesOf<Track> trackParser
-let parseSavedTrack = parsePagesOf<SavedTrack> savedTrackParser
+
+let parsePagesOfArtists (pages: PagesOf<Artist>) =
+    printfn "Found %d results" pages.total
+
+    writeJson
+        "api.json"
+        { limit = pages.limit
+          next = pages.next
+          offset = pages.offset
+          previous = pages.previous
+          total = pages.total
+          items = pages.items |> List.map artistParser }
+
+    pages.items
+    |> List.mapi (fun idx item ->
+        { idx = idx
+          id = item.id
+          name = item.name })
+    |> writeJson "parsed.json"
+
+let parsePagesOfAlbums (pages: PagesOf<Album>) =
+    printfn "Found %d results" pages.total
+
+    writeJson
+        "api.json"
+        { limit = pages.limit
+          next = pages.next
+          offset = pages.offset
+          previous = pages.previous
+          total = pages.total
+          items = pages.items |> List.map albumParser }
+
+    pages.items
+    |> List.mapi (fun idx item ->
+        { idx = idx
+          id = item.id
+          name = item.name })
+    |> writeJson "parsed.json"
+
+let parsePagesOfTracks (pages: PagesOf<Track>) =
+    printfn "Found %d results" pages.total
+
+    writeJson
+        "api.json"
+        { limit = pages.limit
+          next = pages.next
+          offset = pages.offset
+          previous = pages.previous
+          total = pages.total
+          items = pages.items |> List.map trackParser }
+
+    pages.items
+    |> List.mapi (fun idx item ->
+        { idx = idx
+          id = item.id
+          name = item.name })
+    |> writeJson "parsed.json"
+
+let parsePagesOfSavedTracks (pages: PagesOf<SavedTrack>) =
+    printfn "Found %d results" pages.total
+
+    writeJson
+        "api.json"
+        { limit = pages.limit
+          next = pages.next
+          offset = pages.offset
+          previous = pages.previous
+          total = pages.total
+          items = pages.items |> List.map savedTrackParser }
+
+    pages.items
+    |> List.mapi (fun idx item ->
+        { idx = idx
+          id = item.track.id
+          name = item.track.name })
+    |> writeJson "parsed.json"
 
 
 type CheckResponse = { items: list<bool> }

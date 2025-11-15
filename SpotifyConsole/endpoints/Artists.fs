@@ -28,4 +28,4 @@ let getArtistAlbums (query: list<string>) =
         (sprintf "%s/artists/%s/albums?include_groups=album" BASE_URL artistId)
     |> sendGetRequest
 
-    retrieveJson<PagesOf<Album>> "api.json" |> parseAlbum
+    retrieveJson<PagesOf<Album>> "api.json" |> parsePagesOfAlbums

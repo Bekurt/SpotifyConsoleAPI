@@ -22,7 +22,7 @@ let getTracks (query: list<string>) =
     |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/me/tracks" BASE_URL)
     |> sendGetRequest
 
-    retrieveJson<PagesOf<SavedTrack>> "api.json" |> parseSavedTrack
+    retrieveJson<PagesOf<SavedTrack>> "api.json" |> parsePagesOfSavedTracks
 
 
 type SaveBody = { ids: list<string> }

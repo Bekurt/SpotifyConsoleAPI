@@ -36,8 +36,8 @@ let getUsersTopItems (query: list<string>) =
         |> sendGetRequest
 
         match urlMapping.Item 0 with
-        | "tracks?" -> retrieveJson<PagesOf<Track>> "api.json" |> parseTrack
-        | "artists?" -> retrieveJson<PagesOf<Artist>> "api.json" |> parseArtist
-        | _ -> retrieveJson<PagesOf<Track>> "api.json" |> parseTrack
+        | "tracks?" -> retrieveJson<PagesOf<Track>> "api.json" |> parsePagesOfTracks
+        | "artists?" -> retrieveJson<PagesOf<Artist>> "api.json" |> parsePagesOfArtists
+        | _ -> retrieveJson<PagesOf<Track>> "api.json" |> parsePagesOfTracks
     else
         failwith "Query is missing required parameters"

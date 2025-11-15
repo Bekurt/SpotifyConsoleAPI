@@ -32,9 +32,9 @@ let searchItems (query: list<string>) =
         |> sendGetRequest
 
         match urlMapping.Item 1 with
-        | "&type=track" -> (retrieveJson<SearchResponse> "api.json").tracks |> parseTrack
-        | "&type=artist" -> (retrieveJson<SearchResponse> "api.json").artists |> parseArtist
-        | "&type=album" -> (retrieveJson<SearchResponse> "api.json").albums |> parseAlbum
-        | _ -> (retrieveJson<SearchResponse> "api.json").tracks |> parseTrack
+        | "&type=track" -> (retrieveJson<TrackSearch> "api.json").tracks |> parsePagesOfTracks
+        | "&type=artist" -> (retrieveJson<ArtistSearch> "api.json").artists |> parsePagesOfArtists
+        | "&type=album" -> (retrieveJson<AlbumSearch> "api.json").albums |> parsePagesOfAlbums
+        | _ -> (retrieveJson<TrackSearch> "api.json").tracks |> parsePagesOfTracks
     else
         failwith "Query is missing required parameters"
