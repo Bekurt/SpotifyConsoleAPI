@@ -29,6 +29,14 @@ type Track =
       name: string
       track_number: int }
 
+type AlbumTrack =
+    { artists: list<Artist>
+      disc_number: int
+      duration_ms: int
+      id: string
+      name: string
+      track_number: int }
+
 type SavedTrack = { added_at: string; track: Track }
 
 type TrackSearch = { tracks: PagesOf<Track> }
@@ -57,6 +65,14 @@ let artistParser (artist: Artist) = { id = artist.id; name = artist.name }
 let trackParser (track: Track) =
     { artists = track.artists |> List.map artistParser
       album = track.album |> albumParser
+      disc_number = track.disc_number
+      duration_ms = track.duration_ms
+      id = track.id
+      name = track.name
+      track_number = track.track_number }
+
+let albumTrackParser (track: AlbumTrack) =
+    { artists = track.artists |> List.map artistParser
       disc_number = track.disc_number
       duration_ms = track.duration_ms
       id = track.id
@@ -140,6 +156,27 @@ let parsePagesOfTracks (pages: PagesOf<Track>) =
           artist = item.artists.Head.name })
     |> writeJson "parsed.json"
 
+let parsePagesOfAlbumTracks (album: string) (pages: PagesOf<AlbumTrack>) =
+    printfn "Found %d results" pages.total
+
+    writeJson
+        "api.json"
+        { limit = pages.limit
+          next = pages.next
+          offset = pages.offset
+          previous = pages.previous
+          total = pages.total
+          items = pages.items |> List.map albumTrackParser }
+
+    pages.items
+    |> List.mapi (fun idx item ->
+        { idx = idx
+          id = item.id
+          track = item.name
+          album = album
+          artist = item.artists.Head.name })
+    |> writeJson "parsed.json"
+
 let parsePagesOfSavedTracks (pages: PagesOf<SavedTrack>) =
     printfn "Found %d results" pages.total
 
@@ -159,17 +196,4 @@ let parsePagesOfSavedTracks (pages: PagesOf<SavedTrack>) =
           track = item.track.name
           album = item.track.album.name
           artist = item.track.artists.Head.name })
-    |> writeJson "parsed.json"
-
-
-type CheckResponse = { items: list<bool> }
-type ReadableResponse = { isSaved: bool; name: string }
-
-let parseCheckTracks (inputList: ParsedResponse) =
-    let itemList = retrieveJson<CheckResponse> "api.json"
-
-    itemList.items
-    |> List.mapi (fun idx item ->
-        { isSaved = item
-          name = (inputList.Item idx).track })
     |> writeJson "parsed.json"

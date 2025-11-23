@@ -27,7 +27,7 @@ let writeJson<'T> (path: string) (body: 'T) =
     let opts = JsonSerializerOptions(WriteIndented = true)
     File.WriteAllText(savePath, JsonSerializer.Serialize(body, opts))
 
-let sendGetRequestArrayResponse (isRespArray: bool option) (url: string) =
+let sendGetRequest (url: string) =
     printfn "Sending GET to %s" url
 
     task {
@@ -51,10 +51,7 @@ let sendGetRequestArrayResponse (isRespArray: bool option) (url: string) =
                 if not resp.IsSuccessStatusCode then
                     failwithf "Request failed: %d - %s" (int resp.StatusCode) body
 
-                use doc =
-                    match isRespArray with
-                    | Some b -> JsonDocument.Parse(sprintf "{\"items\": %s}" body)
-                    | None -> JsonDocument.Parse body
+                use doc = JsonDocument.Parse body
 
                 writeJson "api.json" doc
 
@@ -63,8 +60,6 @@ let sendGetRequestArrayResponse (isRespArray: bool option) (url: string) =
 
     |> Async.AwaitTask
     |> Async.RunSynchronously
-
-let sendGetRequest (url: string) = url |> sendGetRequestArrayResponse None
 
 let sendPostRequest<'T> (url: string) (payload: 'T) =
     printfn "Sending POST to %s" url

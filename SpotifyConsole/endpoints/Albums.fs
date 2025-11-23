@@ -26,4 +26,5 @@ let getAlbumTracks (query: list<string>) =
     |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/albums/%s/tracks" BASE_URL albumId)
     |> sendGetRequest
 
-    retrieveJson<PagesOf<Track>> "api.json" |> parsePagesOfTracks
+    retrieveJson<PagesOf<AlbumTrack>> "api.json"
+    |> parsePagesOfAlbumTracks albumResponse.Head.album

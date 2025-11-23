@@ -62,15 +62,3 @@ let deleteTracks () =
     |> List.iter (fun chunk ->
         let body = { ids = chunk |> List.map (fun i -> i.id) }
         sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body))
-
-let checkTracks () =
-    retrieveJson<list<ParsedItem>> "fold.json"
-    |> List.chunkBySize 50
-    |> List.iter (fun chunk ->
-        chunk
-        |> List.fold (fun s i -> s + i.id + ",") ""
-        |> sprintf "%s/me/tracks/contains?ids=%s" BASE_URL
-        |> sendGetRequestArrayResponse (Some true)
-
-        parseCheckTracks chunk
-        Handlers.allToTheFold ())

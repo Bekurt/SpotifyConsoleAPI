@@ -7,7 +7,7 @@ let commandList =
 
 let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
-let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
+let tracksCmdList = [ "get"; "save"; "delete" ]
 let userCmdList = [ "top" ]
 let respCmdList = [ "fold"; "join"; "cut"; "clear"; "shuffle"; "load" ]
 
@@ -34,7 +34,7 @@ let commandHelper argList =
     | "artists" :: [] -> printCmdList artistCmdList (Some "Endpoint for artist queries.\nAvailable commands are:")
     | "artists" :: subPath :: _ ->
         match subPath with
-        | "tracks" -> printfn "Get artit albums. Query structure -> artist albums limit offset"
+        | "albums" -> printfn "Get artit albums. Query structure -> artist albums limit offset"
         | _ -> noCommandFound subPath
     | "search" :: _ -> printfn "Search item. Query structure -> search name type limit offset"
     | "tracks" :: [] -> printCmdList tracksCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
@@ -43,7 +43,6 @@ let commandHelper argList =
         | "get" -> printfn "Get saved tracks. Query structure -> tracks get limit offset OR tracks get all"
         | "save" -> printfn "Add tracks to saved. Query structure -> tracks save"
         | "delete" -> printfn "Delete tracks from saved. Query structure -> tracks delete"
-        | "check" -> printfn "Check if tracks are saved. Query structure -> tracks check"
         | _ -> noCommandFound subPath
     | "user" :: [] -> printCmdList userCmdList (Some "Endpoint for user actions.\nAvailable commands are:")
     | "user" :: subPath :: _ ->
@@ -84,7 +83,6 @@ let commandInterpreter argList =
             | _ -> Tracks.getTracks query
         | "save" -> Tracks.saveTracks ()
         | "delete" -> Tracks.deleteTracks ()
-        | "check" -> Tracks.checkTracks ()
         | _ -> noCommandFound subPath
     | "user" :: subPath :: query ->
         match subPath with
