@@ -67,9 +67,9 @@ let commandInterpreter argList =
     match argList with
     | "help" :: subCommand -> commandHelper subCommand
     | "auth" :: _ -> Auth.authorizeAsync () |> Async.AwaitTask |> Async.RunSynchronously
-    | "albums" :: subPath :: query ->
+    | "albums" :: subPath :: _ ->
         match subPath with
-        | "tracks" -> Albums.getAlbumTracks query
+        | "tracks" -> Albums.getAlbumTracks ()
         | _ -> noCommandFound subPath
     | "artists" :: subPath :: query ->
         match subPath with

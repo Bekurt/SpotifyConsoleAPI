@@ -3,26 +3,25 @@ module SpotifyConsole.Albums
 open Base
 open Parsers
 
-let getAlbumTracks (query: list<string>) =
+let getAlbumTracks () =
+    Handlers.clearResponse ()
     let albumResponse = retrieveJson<ParsedResponse> "albums.json"
 
-    let albumIdx =
-        if query.Length > 0 then
-            parseIntStrOption (query.Item 0) |> Option.get
-        else
-            0
+    albumResponse
+    |> List.iter (fun album ->
+        sprintf "%s/albums/%s/tracks?limit=50" BASE_URL album.id |> sendGetRequest
+        let response = retrieveJson<PagesOf<AlbumTrack>> "api.json"
 
-    let albumId =
-        if albumResponse.Length > albumIdx then
-            (albumResponse.Item albumIdx).id
-        else
-            failwithf "WRONG INDEX IDIOT"
-            ""
+        response |> parsePagesOfAlbumTracks album.album
+        Handlers.allToTheFold ()
 
-    let offset = if query.Length > 1 then query.Item 1 else "0"
+        let mutable next = response.next
 
-    sprintf "%s/albums/%s/tracks?limit=50&offset=%s" BASE_URL albumId offset
-    |> sendGetRequest
+        while not (isNull next) do
+            sendGetRequest next
+            let response = retrieveJson<PagesOf<AlbumTrack>> "api.json"
 
-    retrieveJson<PagesOf<AlbumTrack>> "api.json"
-    |> parsePagesOfAlbumTracks (albumResponse.Item albumIdx).album
+            response |> parsePagesOfAlbumTracks album.album
+            Handlers.allToTheFold ()
+
+            next <- response.next)
