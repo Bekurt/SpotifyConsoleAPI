@@ -5,7 +5,7 @@ open Parsers
 
 let getAlbumTracks () =
     Handlers.clearResponse ()
-    let albumResponse = retrieveJson<ParsedResponse> "albums.json"
+    let albumResponse = retrieveJson<ParsedResponse> "parsed.json"
 
     albumResponse
     |> List.iter (fun album ->

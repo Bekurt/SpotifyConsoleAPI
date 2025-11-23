@@ -14,18 +14,16 @@ let getArtistAlbums () =
 
     parsePagesOfAlbums response
 
-    retrieveJson<ParsedResponse> "parsed.json"
-    |> writeJson<ParsedResponse> "albums.json"
-
     while not (isNull next) do
+        let oldResponse = retrieveJson<ParsedResponse> "parsed.json"
         sendGetRequest next
         let response = retrieveJson<PagesOf<Album>> "api.json"
         parsePagesOfAlbums response
         let newResponse = retrieveJson<ParsedResponse> "parsed.json"
-        let oldResponse = retrieveJson<ParsedResponse> "albums.json"
+
 
         oldResponse @ newResponse
         |> List.mapi (fun r_idx item -> { item with idx = r_idx })
-        |> writeJson<ParsedResponse> "albums.json"
+        |> writeJson<ParsedResponse> "parse.json"
 
         next <- response.next
