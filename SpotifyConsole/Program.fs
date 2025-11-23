@@ -9,7 +9,7 @@ let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
-let respCmdList = [ "fold"; "join"; "cut"; "clear" ]
+let respCmdList = [ "fold"; "join"; "cut"; "clear"; "shuffle" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
 
@@ -56,7 +56,8 @@ let commandHelper argList =
         | "fold" -> printfn "Add entire parsed response to fold.json"
         | "join" -> printfn "Adds selected indexes to fold.json"
         | "cut" -> printfn "Remove selected indexes from fold.json"
-        | "clear" -> printfn "Clears cumulative_response.json"
+        | "clear" -> printfn "Clears fold.json"
+        | "shuffle" -> printfn "Shuffle saved tracks"
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
     | _ -> printCmdList commandList None
@@ -94,6 +95,7 @@ let commandInterpreter argList =
         | "join" -> Handlers.joinTheFold query
         | "cut" -> Handlers.leaveTheFold query
         | "clear" -> Handlers.clearResponse ()
+        | "shuffle" -> Handlers.shuffleSavedTracks ()
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
     | _ -> printfn "You need to send an instruction"

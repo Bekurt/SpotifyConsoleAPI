@@ -39,3 +39,11 @@ let leaveTheFold (cmd: list<string>) =
     |> List.filter (fun item -> selectedItemsIdx |> List.contains item.idx |> not)
     |> List.mapi (fun r_idx item -> { item with idx = r_idx })
     |> writeJson "fold.json"
+
+let shuffleSavedTracks () =
+    let rnd = System.Random()
+
+    retrieveJson<ParsedResponse> "saved.json"
+    |> List.sortBy (fun _ -> rnd.Next())
+    |> List.mapi (fun r_idx item -> { item with idx = r_idx })
+    |> writeJson<ParsedResponse> "saved.json"
