@@ -4,7 +4,7 @@ open Base
 open Parsers
 
 let getAlbumTracks (query: list<string>) =
-    let albumResponse = retrieveJson<ParsedResponse> "parsed.json"
+    let albumResponse = retrieveJson<ParsedResponse> "albums.json"
 
     let albumIdx =
         if query.Length > 0 then
