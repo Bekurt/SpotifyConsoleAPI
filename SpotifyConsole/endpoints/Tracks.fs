@@ -24,6 +24,22 @@ let getTracks (query: list<string>) =
 
     retrieveJson<PagesOf<SavedTrack>> "api.json" |> parsePagesOfSavedTracks
 
+let getAllTracks () =
+    Handlers.clearResponse ()
+    getTracks [ "get"; "50"; "0" ]
+
+    let response = retrieveJson<PagesOf<SavedTrack>> "api.json"
+    let mutable next = response.next
+
+    while isNull next do
+        sendGetRequest next
+        let response = retrieveJson<PagesOf<SavedTrack>> "api.json"
+        parsePagesOfSavedTracks response
+        Handlers.allToTheFold ()
+        next <- response.next
+
+    retrieveJson<ParsedResponse> "fold.json"
+    |> writeJson<ParsedResponse> "saved.json"
 
 type SaveBody = { ids: list<string> }
 

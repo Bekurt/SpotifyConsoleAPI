@@ -16,6 +16,14 @@ let selectFromResponse (cmd: list<string>) =
 
 let clearResponse () = [] |> writeJson "fold.json"
 
+let allToTheFold () =
+    let foldResponse = retrieveJson<ParsedResponse> "fold.json"
+    let parsedResponse = retrieveJson<ParsedResponse> "parsed.json"
+
+    foldResponse @ parsedResponse
+    |> List.mapi (fun r_idx item -> { item with idx = r_idx })
+    |> writeJson "fold.json"
+
 let joinTheFold (cmd: list<string>) =
     let foldResponse = retrieveJson<ParsedResponse> "fold.json"
 

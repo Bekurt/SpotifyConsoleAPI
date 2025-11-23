@@ -9,7 +9,7 @@ let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
-let respCmdList = [ "join"; "cut"; "clear" ]
+let respCmdList = [ "fold"; "join"; "cut"; "clear" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
 
@@ -40,7 +40,7 @@ let commandHelper argList =
     | "tracks" :: [] -> printCmdList tracksCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")
     | "tracks" :: subPath :: _ ->
         match subPath with
-        | "get" -> printfn "Get saved tracks. Query structure -> tracks get limit offset"
+        | "get" -> printfn "Get saved tracks. Query structure -> tracks get limit offset OR tracks get all"
         | "save" -> printfn "Add tracks to saved. Query structure -> tracks save"
         | "delete" -> printfn "Delete tracks from saved. Query structure -> tracks delete"
         | "check" -> printfn "Check if tracks are saved. Query structure -> tracks check"
@@ -53,6 +53,7 @@ let commandHelper argList =
     | "resp" :: [] -> printCmdList respCmdList (Some "Response handling.\nAvailable commands are:")
     | "resp" :: subPath :: _ ->
         match subPath with
+        | "fold" -> printfn "Add entire parsed response to fold.json"
         | "join" -> printfn "Adds selected indexes to fold.json"
         | "cut" -> printfn "Remove selected indexes from fold.json"
         | "clear" -> printfn "Clears cumulative_response.json"
@@ -75,7 +76,10 @@ let commandInterpreter argList =
     | "search" :: query -> Search.searchItems query
     | "tracks" :: subPath :: query ->
         match subPath with
-        | "get" -> Tracks.getTracks query
+        | "get" ->
+            match query with
+            | [ "all" ] -> Tracks.getAllTracks ()
+            | _ -> Tracks.getTracks query
         | "save" -> Tracks.saveTracks ()
         | "delete" -> Tracks.deleteTracks ()
         | "check" -> Tracks.checkTracks ()
@@ -86,6 +90,7 @@ let commandInterpreter argList =
         | _ -> noCommandFound subPath
     | "resp" :: subPath :: query ->
         match subPath with
+        | "fold" -> Handlers.allToTheFold ()
         | "join" -> Handlers.joinTheFold query
         | "cut" -> Handlers.leaveTheFold query
         | "clear" -> Handlers.clearResponse ()
