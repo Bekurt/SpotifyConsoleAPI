@@ -9,7 +9,7 @@ let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
-let respCmdList = [ "fold"; "join"; "cut"; "clear"; "shuffle" ]
+let respCmdList = [ "fold"; "join"; "cut"; "clear"; "shuffle"; "load" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
 
@@ -57,6 +57,7 @@ let commandHelper argList =
         | "join" -> printfn "Adds selected indexes to fold.json"
         | "cut" -> printfn "Remove selected indexes from fold.json"
         | "clear" -> printfn "Clears fold.json"
+        | "load" -> printfn "Move saved.json into fold.json"
         | "shuffle" -> printfn "Shuffle saved tracks"
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
@@ -95,6 +96,7 @@ let commandInterpreter argList =
         | "join" -> Handlers.joinTheFold query
         | "cut" -> Handlers.leaveTheFold query
         | "clear" -> Handlers.clearResponse ()
+        | "load" -> Handlers.moveSavedToFold ()
         | "shuffle" -> Handlers.shuffleSavedTracks ()
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other

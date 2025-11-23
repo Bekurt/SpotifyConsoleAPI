@@ -47,3 +47,7 @@ let shuffleSavedTracks () =
     |> List.sortBy (fun _ -> rnd.Next())
     |> List.mapi (fun r_idx item -> { item with idx = r_idx })
     |> writeJson<ParsedResponse> "saved.json"
+
+let moveSavedToFold () =
+    retrieveJson<ParsedResponse> "saved.json"
+    |> writeJson<ParsedResponse> "fold.json"
