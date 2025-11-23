@@ -44,21 +44,21 @@ let getAllTracks () =
 type SaveBody = { ids: list<string> }
 
 let saveTracks () =
-    let tracks = retrieveJson<ParsedResponse> "parsed.json"
+    let tracks = retrieveJson<ParsedResponse> "fold.json"
 
     let body = { ids = tracks |> List.map (fun i -> i.id) }
 
     sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body
 
 let deleteTracks () =
-    let tracks = retrieveJson<ParsedResponse> "parsed.json"
+    let tracks = retrieveJson<ParsedResponse> "fold.json"
 
     let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
 
     sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body)
 
 let checkTracks () =
-    let tracks = retrieveJson<list<ParsedItem>> "parsed.json"
+    let tracks = retrieveJson<list<ParsedItem>> "fold.json"
 
     tracks
     |> List.fold (fun s i -> s + i.id + ",") ""
