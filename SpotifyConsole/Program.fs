@@ -73,7 +73,7 @@ let commandInterpreter argList =
         | _ -> noCommandFound subPath
     | "artists" :: subPath :: query ->
         match subPath with
-        | "albums" -> Artists.getArtistAlbums query
+        | "albums" -> Artists.getArtistAlbums ()
         | _ -> noCommandFound subPath
     | "search" :: query -> Search.searchItems query
     | "tracks" :: subPath :: query ->

@@ -3,29 +3,26 @@ module SpotifyConsole.Artists
 open Base
 open Parsers
 
-let getArtistAlbums (query: list<string>) =
+let getArtistAlbums () =
     let artistResponse = retrieveJson<ParsedResponse> "parsed.json"
 
     let artistId = artistResponse.Head.id
+    sendGetRequest (sprintf "%s/artists/%s/albums?include_groups=album&limit=50" BASE_URL artistId)
 
-    let urlMapping =
-        query
-        |> List.mapi (fun i s ->
-            match i with
-            | 0 ->
-                match parseIntStrOption s with
-                | Some n when n > 0 && n <= 50 -> sprintf "&limit=%s" s
-                | _ -> ""
-            | 1 ->
-                match parseIntStrOption s with
-                | Some n when n >= 0 -> sprintf "&offset=%s" s
-                | _ -> ""
-            | _ -> "")
+    let response = retrieveJson<PagesOf<Album>> "api.json"
+    let mutable next = response.next
 
-    urlMapping
-    |> List.fold
-        (fun (out: string) (next: string) -> out + next)
-        (sprintf "%s/artists/%s/albums?include_groups=album" BASE_URL artistId)
-    |> sendGetRequest
+    parsePagesOfAlbums response
 
-    retrieveJson<PagesOf<Album>> "api.json" |> parsePagesOfAlbums
+    retrieveJson<ParsedResponse> "parsed.json"
+    |> writeJson<ParsedResponse> "albums.json"
+
+    while not (isNull next) do
+        sendGetRequest next
+        let response = retrieveJson<PagesOf<Album>> "api.json"
+        parsePagesOfAlbums response
+        let newResponse = retrieveJson<ParsedResponse> "parsed.json"
+        let oldResponse = retrieveJson<ParsedResponse> "albums.json"
+
+        oldResponse @ newResponse |> writeJson<ParsedResponse> "albums.json"
+        next <- response.next
