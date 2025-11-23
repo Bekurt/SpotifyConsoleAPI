@@ -4,7 +4,7 @@ open Base
 open Parsers
 
 let getArtistAlbums (query: list<string>) =
-    let artistResponse = retrieveJson<ParsedResponse> "fold.json"
+    let artistResponse = retrieveJson<ParsedResponse> "parsed.json"
 
     let artistId = artistResponse.Head.id
 

@@ -14,6 +14,9 @@ let selectFromResponse (cmd: list<string>) =
     retrieveJson<ParsedResponse> "parsed.json"
     |> List.filter (fun i -> intIdxList |> List.contains i.idx)
 
+let filterResponse (cmd: list<string>) =
+    selectFromResponse cmd |> writeJson<ParsedResponse> "parsed.json"
+
 let clearResponse () = [] |> writeJson "fold.json"
 
 let allToTheFold () =

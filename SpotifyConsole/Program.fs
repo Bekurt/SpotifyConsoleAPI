@@ -9,7 +9,7 @@ let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete" ]
 let userCmdList = [ "top" ]
-let respCmdList = [ "fold"; "join"; "cut"; "clear"; "shuffle"; "load" ]
+let respCmdList = [ "join"; "joinAll"; "cut"; "clear"; "filter"; "shuffle"; "load" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
 
@@ -52,10 +52,11 @@ let commandHelper argList =
     | "resp" :: [] -> printCmdList respCmdList (Some "Response handling.\nAvailable commands are:")
     | "resp" :: subPath :: _ ->
         match subPath with
-        | "fold" -> printfn "Add entire parsed response to fold.json"
+        | "joinAll" -> printfn "Add entire parsed response to fold.json"
         | "join" -> printfn "Adds selected indexes to fold.json"
         | "cut" -> printfn "Remove selected indexes from fold.json"
         | "clear" -> printfn "Clears fold.json"
+        | "filter" -> printfn "Keep only selected indexes from parsed.json"
         | "load" -> printfn "Move saved.json into fold.json"
         | "shuffle" -> printfn "Shuffle saved tracks"
         | _ -> noCommandFound subPath
@@ -90,10 +91,11 @@ let commandInterpreter argList =
         | _ -> noCommandFound subPath
     | "resp" :: subPath :: query ->
         match subPath with
-        | "fold" -> Handlers.allToTheFold ()
+        | "joinAll" -> Handlers.allToTheFold ()
         | "join" -> Handlers.joinTheFold query
         | "cut" -> Handlers.leaveTheFold query
         | "clear" -> Handlers.clearResponse ()
+        | "filter" -> Handlers.filterResponse query
         | "load" -> Handlers.moveSavedToFold ()
         | "shuffle" -> Handlers.shuffleSavedTracks ()
         | _ -> noCommandFound subPath
