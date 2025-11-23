@@ -50,25 +50,27 @@ let getAllTracks () =
 type SaveBody = { ids: list<string> }
 
 let saveTracks () =
-    let tracks = retrieveJson<ParsedResponse> "fold.json"
-
-    let body = { ids = tracks |> List.map (fun i -> i.id) }
-
-    sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body
+    retrieveJson<ParsedResponse> "fold.json"
+    |> List.chunkBySize 50
+    |> List.iter (fun chunk ->
+        let body = { ids = chunk |> List.map (fun i -> i.id) }
+        sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body)
 
 let deleteTracks () =
-    let tracks = retrieveJson<ParsedResponse> "fold.json"
-
-    let body: SaveBody = { ids = tracks |> List.map (fun i -> i.id) }
-
-    sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body)
+    retrieveJson<ParsedResponse> "fold.json"
+    |> List.chunkBySize 50
+    |> List.iter (fun chunk ->
+        let body = { ids = chunk |> List.map (fun i -> i.id) }
+        sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body))
 
 let checkTracks () =
-    let tracks = retrieveJson<list<ParsedItem>> "fold.json"
+    retrieveJson<list<ParsedItem>> "fold.json"
+    |> List.chunkBySize 50
+    |> List.iter (fun chunk ->
+        chunk
+        |> List.fold (fun s i -> s + i.id + ",") ""
+        |> sprintf "%s/me/tracks/contains?ids=%s" BASE_URL
+        |> sendGetRequestArrayResponse (Some true)
 
-    tracks
-    |> List.fold (fun s i -> s + i.id + ",") ""
-    |> sprintf "%s/me/tracks/contains?ids=%s" BASE_URL
-    |> sendGetRequestArrayResponse (Some true)
-
-    parseCheckTracks ()
+        parseCheckTracks chunk
+        Handlers.allToTheFold ())

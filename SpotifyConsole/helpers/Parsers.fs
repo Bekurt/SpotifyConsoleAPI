@@ -165,13 +165,11 @@ let parsePagesOfSavedTracks (pages: PagesOf<SavedTrack>) =
 type CheckResponse = { items: list<bool> }
 type ReadableResponse = { isSaved: bool; name: string }
 
-let parseCheckTracks () =
+let parseCheckTracks (inputList: ParsedResponse) =
     let itemList = retrieveJson<CheckResponse> "api.json"
-    let inputList = retrieveJson<ParsedResponse> "parsed.json"
-
 
     itemList.items
     |> List.mapi (fun idx item ->
         { isSaved = item
           name = (inputList.Item idx).track })
-    |> writeJson "api.json"
+    |> writeJson "parsed.json"
