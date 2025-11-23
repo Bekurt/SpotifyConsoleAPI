@@ -29,12 +29,12 @@ let commandHelper argList =
     | "albums" :: [] -> printCmdList albumsCmdList (Some "Endpoint for album queries.\nAvailable commands are:")
     | "albums" :: subPath :: _ ->
         match subPath with
-        | "tracks" -> printfn "Get album tracks. Query structure -> albums tracks limit offset"
+        | "tracks" -> printfn "Get album tracks. Query structure -> albums tracks albumIdx offset"
         | _ -> noCommandFound subPath
     | "artists" :: [] -> printCmdList artistCmdList (Some "Endpoint for artist queries.\nAvailable commands are:")
     | "artists" :: subPath :: _ ->
         match subPath with
-        | "albums" -> printfn "Get artit albums. Query structure -> artist albums limit offset"
+        | "albums" -> printfn "Get artit albums. Query structure -> artist albums"
         | _ -> noCommandFound subPath
     | "search" :: _ -> printfn "Search item. Query structure -> search name type limit offset"
     | "tracks" :: [] -> printCmdList tracksCmdList (Some "Endpoint for saved tracks.\nAvailable commands are:")

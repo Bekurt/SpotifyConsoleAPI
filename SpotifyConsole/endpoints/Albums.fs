@@ -6,25 +6,23 @@ open Parsers
 let getAlbumTracks (query: list<string>) =
     let albumResponse = retrieveJson<ParsedResponse> "parsed.json"
 
-    let albumId = albumResponse.Head.id
+    let albumIdx =
+        if query.Length > 0 then
+            parseIntStrOption (query.Item 0) |> Option.get
+        else
+            0
 
-    let urlMapping =
-        query
-        |> List.mapi (fun i s ->
-            match i with
-            | 0 ->
-                match parseIntStrOption s with
-                | Some n when n > 0 && n <= 50 -> sprintf "?limit=%s" s
-                | _ -> ""
-            | 1 ->
-                match parseIntStrOption s with
-                | Some n when n >= 0 -> sprintf "&offset=%s" s
-                | _ -> ""
-            | _ -> "")
+    let albumId =
+        if albumResponse.Length > albumIdx then
+            (albumResponse.Item albumIdx).id
+        else
+            failwithf "WRONG INDEX IDIOT"
+            ""
 
-    urlMapping
-    |> List.fold (fun (out: string) (next: string) -> out + next) (sprintf "%s/albums/%s/tracks" BASE_URL albumId)
+    let offset = if query.Length > 1 then query.Item 1 else "0"
+
+    sprintf "%s/albums/%s/tracks?limit=50&offset=%s" BASE_URL albumId offset
     |> sendGetRequest
 
     retrieveJson<PagesOf<AlbumTrack>> "api.json"
-    |> parsePagesOfAlbumTracks albumResponse.Head.album
+    |> parsePagesOfAlbumTracks (albumResponse.Item albumIdx).album

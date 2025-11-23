@@ -24,5 +24,8 @@ let getArtistAlbums () =
         let newResponse = retrieveJson<ParsedResponse> "parsed.json"
         let oldResponse = retrieveJson<ParsedResponse> "albums.json"
 
-        oldResponse @ newResponse |> writeJson<ParsedResponse> "albums.json"
+        oldResponse @ newResponse
+        |> List.mapi (fun r_idx item -> { item with idx = r_idx })
+        |> writeJson<ParsedResponse> "albums.json"
+
         next <- response.next
