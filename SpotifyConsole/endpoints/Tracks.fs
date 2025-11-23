@@ -38,8 +38,14 @@ let getAllTracks () =
         Handlers.allToTheFold ()
         next <- response.next
 
-    retrieveJson<ParsedResponse> "fold.json"
-    |> writeJson<ParsedResponse> "saved.json"
+    let allSavedTracks = retrieveJson<ParsedResponse> "fold.json"
+
+    allSavedTracks
+    |> List.map (fun item -> item.artist)
+    |> List.distinct
+    |> writeJson<list<string>> "artists.json"
+
+    allSavedTracks |> writeJson<ParsedResponse> "saved.json"
 
 type SaveBody = { ids: list<string> }
 

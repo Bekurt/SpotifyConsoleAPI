@@ -35,7 +35,13 @@ type TrackSearch = { tracks: PagesOf<Track> }
 type AlbumSearch = { albums: PagesOf<Album> }
 type ArtistSearch = { artists: PagesOf<Artist> }
 
-type ParsedItem = { idx: int; id: string; name: string }
+type ParsedItem =
+    { idx: int
+      id: string
+      track: string
+      album: string
+      artist: string }
+
 type ParsedResponse = list<ParsedItem>
 
 let albumParser (album: Album) =
@@ -87,7 +93,9 @@ let parsePagesOfArtists (pages: PagesOf<Artist>) =
     |> List.mapi (fun idx item ->
         { idx = idx
           id = item.id
-          name = item.name })
+          track = ""
+          album = ""
+          artist = item.name })
     |> writeJson "parsed.json"
 
 let parsePagesOfAlbums (pages: PagesOf<Album>) =
@@ -106,7 +114,9 @@ let parsePagesOfAlbums (pages: PagesOf<Album>) =
     |> List.mapi (fun idx item ->
         { idx = idx
           id = item.id
-          name = item.name })
+          track = ""
+          album = item.name
+          artist = item.artists.Head.name })
     |> writeJson "parsed.json"
 
 let parsePagesOfTracks (pages: PagesOf<Track>) =
@@ -125,7 +135,9 @@ let parsePagesOfTracks (pages: PagesOf<Track>) =
     |> List.mapi (fun idx item ->
         { idx = idx
           id = item.id
-          name = item.name })
+          track = item.name
+          album = item.album.name
+          artist = item.artists.Head.name })
     |> writeJson "parsed.json"
 
 let parsePagesOfSavedTracks (pages: PagesOf<SavedTrack>) =
@@ -144,7 +156,9 @@ let parsePagesOfSavedTracks (pages: PagesOf<SavedTrack>) =
     |> List.mapi (fun idx item ->
         { idx = idx
           id = item.track.id
-          name = item.track.name })
+          track = item.track.name
+          album = item.track.album.name
+          artist = item.track.artists.Head.name })
     |> writeJson "parsed.json"
 
 
@@ -159,5 +173,5 @@ let parseCheckTracks () =
     itemList.items
     |> List.mapi (fun idx item ->
         { isSaved = item
-          name = (inputList.Item idx).name })
+          name = (inputList.Item idx).track })
     |> writeJson "api.json"
