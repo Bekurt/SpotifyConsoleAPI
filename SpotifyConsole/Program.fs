@@ -9,7 +9,7 @@ let albumsCmdList = [ "tracks" ]
 let artistCmdList = [ "albums" ]
 let tracksCmdList = [ "get"; "save"; "delete"; "check" ]
 let userCmdList = [ "top" ]
-let respCmdList = [ "fold"; "clear" ]
+let respCmdList = [ "join"; "cut"; "clear" ]
 
 let noCommandFound (cmd: string) = printfn "%s has no matches" cmd
 
@@ -53,7 +53,8 @@ let commandHelper argList =
     | "resp" :: [] -> printCmdList respCmdList (Some "Response handling.\nAvailable commands are:")
     | "resp" :: subPath :: _ ->
         match subPath with
-        | "fold" -> printfn "Adds current parsed response to cumulative_response.json"
+        | "join" -> printfn "Adds selected indexes to fold.json"
+        | "cut" -> printfn "Remove selected indexes from fold.json"
         | "clear" -> printfn "Clears cumulative_response.json"
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
@@ -83,9 +84,10 @@ let commandInterpreter argList =
         match subPath with
         | "top" -> Users.getUsersTopItems query
         | _ -> noCommandFound subPath
-    | "resp" :: subPath :: _ ->
+    | "resp" :: subPath :: query ->
         match subPath with
-        | "fold" -> Handlers.cumulateResponse ()
+        | "join" -> Handlers.joinTheFold query
+        | "cut" -> Handlers.leaveTheFold query
         | "clear" -> Handlers.clearResponse ()
         | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
