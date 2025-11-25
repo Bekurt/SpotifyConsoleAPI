@@ -103,6 +103,10 @@ let commandInterpreter argList =
         | "load" -> Handlers.moveSavedToFold ()
         | "shuffle" -> Handlers.shuffleSavedTracks ()
         | _ -> noCommandFound subPath
+    | "admin" :: subPath :: _ ->
+        match subPath with
+        | "filter" -> Handlers.filterSavedByArtist ()
+        | _ -> noCommandFound subPath
     | other :: _ -> noCommandFound other
     | _ -> printfn "You need to send an instruction"
 

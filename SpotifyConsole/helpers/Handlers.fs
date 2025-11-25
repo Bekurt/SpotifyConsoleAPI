@@ -54,3 +54,11 @@ let shuffleSavedTracks () =
 let moveSavedToFold () =
     retrieveJson<ParsedResponse> "saved.json"
     |> writeJson<ParsedResponse> "fold.json"
+
+let filterSavedByArtist () =
+    let saved = retrieveJson<ParsedResponse> "saved.json"
+    let artist = retrieveJson<string list> "artists.json"
+
+    saved
+    |> List.filter (fun item -> not (artist |> List.contains item.artist))
+    |> writeJson<ParsedResponse> "fold.json"
