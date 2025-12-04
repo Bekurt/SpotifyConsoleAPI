@@ -2,6 +2,7 @@ module SpotifyConsole.Tracks
 
 open Base
 open Parsers
+open System
 
 let getTracks (query: list<string>) =
     let urlMapping =
@@ -50,13 +51,21 @@ let saveArtistList () =
     |> List.distinct
     |> writeJson<list<string>> "artists.json"
 
-type SaveBody = { ids: list<string> }
+type SaveBodyItem = { id: string; added_at: string }
+type SaveBody = { timestamped_ids: list<SaveBodyItem> }
+type DeleteBody = { ids: list<string> }
 
 let saveTracks () =
     retrieveJson<ParsedResponse> "fold.json"
     |> List.chunkBySize 50
     |> List.iter (fun chunk ->
-        let body = { ids = chunk |> List.map (fun i -> i.id) }
+        let body =
+            { timestamped_ids =
+                chunk
+                |> List.map (fun item ->
+                    { id = item.id
+                      added_at = DateTime.UtcNow.AddMinutes(float item.idx).ToString "o" }) }
+
         sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body)
 
 let deleteTracks () =
@@ -64,4 +73,4 @@ let deleteTracks () =
     |> List.chunkBySize 50
     |> List.iter (fun chunk ->
         let body = { ids = chunk |> List.map (fun i -> i.id) }
-        sendDeleteRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) (Some body))
+        sendDeleteRequest<DeleteBody> (sprintf "%s/me/tracks" BASE_URL) (Some body))
