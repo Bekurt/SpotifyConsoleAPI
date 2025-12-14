@@ -30,6 +30,8 @@ let getAllTracks () =
     getTracks [ "50"; "0" ]
 
     let response = retrieveJson<PagesOf<SavedTrack>> "api.json"
+    parsePagesOfSavedTracks response
+    Handlers.allToTheFold ()
     let mutable next = response.next
 
     while not (isNull next) do
