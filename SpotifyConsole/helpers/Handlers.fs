@@ -47,7 +47,9 @@ let shuffleSavedTracks () =
     let rnd = System.Random()
 
     retrieveJson<ParsedResponse> "saved.json"
-    |> List.sortBy (fun _ -> rnd.Next())
+    |> List.randomShuffle
+    |> List.randomShuffle
+    |> List.randomShuffle
     |> List.mapi (fun r_idx item -> { item with idx = r_idx })
     |> writeJson<ParsedResponse> "saved.json"
 

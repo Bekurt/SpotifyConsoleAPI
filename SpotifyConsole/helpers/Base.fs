@@ -41,7 +41,7 @@ let sendGetRequest (url: string) =
             use! resp = http.GetAsync(url)
 
             if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
-                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int64
                 printfn "Rate limit reached (429). Retrying after %d seconds..." wait
                 do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
             else
@@ -81,7 +81,7 @@ let sendPostRequest<'T> (url: string) (payload: 'T) =
             use! resp = http.PostAsync(url, body)
 
             if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
-                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int64
                 printfn "Rate limit reached (429). Retrying after %d seconds..." wait
                 do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
             else
@@ -121,7 +121,7 @@ let sendPutRequest<'T> (url: string) (payload: 'T) =
             use! resp = http.PutAsync(url, body)
 
             if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
-                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int64
                 printfn "Rate limit reached (429). Retrying after %d seconds..." wait
                 do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
             else
@@ -169,7 +169,7 @@ let sendDeleteRequest<'T> (url: string) (payload: 'T option) =
             use! resp = http.SendAsync(req)
 
             if resp.StatusCode = System.Net.HttpStatusCode.TooManyRequests then
-                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int32
+                let wait = resp.Headers.RetryAfter.Delta.Value.TotalSeconds |> int64
                 printfn "Rate limit reached (429). Retrying after %d seconds..." wait
                 do! System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds wait)
             else
