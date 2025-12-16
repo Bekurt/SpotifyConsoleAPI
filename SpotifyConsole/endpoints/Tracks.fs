@@ -58,6 +58,8 @@ type SaveBody = { timestamped_ids: list<SaveBodyItem> }
 type DeleteBody = { ids: list<string> }
 
 let saveTracks () =
+    let referenceTime = DateTime.Parse "01-12-2025"
+
     retrieveJson<ParsedResponse> "fold.json"
     |> List.chunkBySize 50
     |> List.iter (fun chunk ->
@@ -66,7 +68,7 @@ let saveTracks () =
                 chunk
                 |> List.map (fun item ->
                     { id = item.id
-                      added_at = DateTime.UtcNow.AddMinutes(float item.idx).ToString "o" }) }
+                      added_at = referenceTime.AddMinutes(float -item.idx).ToUniversalTime().ToString() }) }
 
         sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body)
 
