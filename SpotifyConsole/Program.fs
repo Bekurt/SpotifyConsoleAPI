@@ -41,7 +41,7 @@ let commandHelper argList =
     | "tracks" :: subPath :: _ ->
         match subPath with
         | "get" -> printfn "Get saved tracks. Query structure -> tracks get limit offset OR tracks get all"
-        | "save" -> printfn "Add tracks to saved. Query structure -> tracks save (_ or artists or tracklist)"
+        | "save" -> printfn "Add tracks to saved. Query structure -> tracks save (_ or artists or list)"
         | "delete" -> printfn "Delete tracks from saved. Query structure -> tracks delete"
         | _ -> noCommandFound subPath
     | "user" :: [] -> printCmdList userCmdList (Some "Endpoint for user actions.\nAvailable commands are:")
