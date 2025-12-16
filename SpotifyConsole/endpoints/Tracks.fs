@@ -68,7 +68,7 @@ let saveTracks () =
                 chunk
                 |> List.map (fun item ->
                     { id = item.id
-                      added_at = referenceTime.AddMinutes(float -item.idx).ToUniversalTime().ToString() }) }
+                      added_at = referenceTime.AddMinutes(float -item.idx).ToUniversalTime().ToString "o" }) }
 
         sendPutRequest<SaveBody> (sprintf "%s/me/tracks" BASE_URL) body)
 
